@@ -1,18 +1,39 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const palaceStopSchema = z.object({
+  name: z.string().min(1, "Please name this stop"),
+  description: z.string().optional(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const palaceSetupSchema = z.object({
+  placeName: z.string().min(1, "Please name your place"),
+  placeDescription: z.string().optional(),
+  stops: z.array(palaceStopSchema).length(3, "Please add exactly 3 stops"),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export const associationSchema = z.object({
+  stopName: z.string(),
+  object: z.string(),
+  scene: z.string(),
+});
+
+export const generateAssociationsSchema = z.object({
+  placeName: z.string(),
+  placeDescription: z.string().optional(),
+  stops: z.array(z.object({
+    name: z.string(),
+    description: z.string().optional(),
+  })),
+});
+
+export type PalaceStop = z.infer<typeof palaceStopSchema>;
+export type PalaceSetup = z.infer<typeof palaceSetupSchema>;
+export type Association = z.infer<typeof associationSchema>;
+export type GenerateAssociationsRequest = z.infer<typeof generateAssociationsSchema>;
+
+export interface WalkthroughAnswer {
+  stopName: z.infer<typeof palaceStopSchema>["name"];
+  userAnswer: string;
+  correctObject: string;
+  isCorrect: boolean;
+}

@@ -82,9 +82,19 @@ export default {
           offline: "rgb(156 163 175)",
         },
       },
+      fontSize: {
+        sm: ["0.9375rem", { lineHeight: "1.5" }],
+        base: ["1.0625rem", { lineHeight: "1.6" }],
+        lg: ["1.25rem", { lineHeight: "1.5" }],
+        xl: ["1.5rem", { lineHeight: "1.4" }],
+        "2xl": ["1.75rem", { lineHeight: "1.35" }],
+        "3xl": ["2rem", { lineHeight: "1.3" }],
+        "4xl": ["2.5rem", { lineHeight: "1.2" }],
+        "5xl": ["3.25rem", { lineHeight: "1.1" }],
+      },
       fontFamily: {
-        sans: ["var(--font-sans)"],
-        serif: ["var(--font-serif)"],
+        sans: ["Open Sans", "var(--font-sans)"],
+        serif: ["Lora", "var(--font-serif)"],
         mono: ["var(--font-mono)"],
       },
       keyframes: {
