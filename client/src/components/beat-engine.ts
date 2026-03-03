@@ -122,49 +122,49 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return "";
 
     case "placement-intro":
-      return `Right, ${name}, here's where the fun really starts. I've picked three objects, and we're going to plant one at each of your stops. But here's the thing -- I'm not going to tell you how to picture them. That's YOUR job. The weirder and sillier you make it, the stickier the memory. Trust me on this one.`;
+      return `Right, ${name}, here's where the fun really starts. I've picked three objects, and we're going to plant one at each of your stops. The weirder you make the picture, the stickier the memory. Trust me on this one.`;
 
     case "place-object-1": {
       const a = state.assignments[0];
       if (!a) return "";
-      return `Your first stop is ${aStop(0)}, and the object is ${a.object}.\n\nNow, ${name}, here's what I want you to do. Picture ${a.object} right there at ${aStop(0)}. But don't just set it down -- make it ridiculous. Is it doing something? Is it enormous? Is it making noise? Tell me what you see in your mind.`;
+      return `${aStop(0).charAt(0).toUpperCase() + aStop(0).slice(1)}. Place ${a.object} right there. Make it big, loud, silly -- whatever sticks. What do you see?`;
     }
 
     case "mirror-object-1": {
       const scene = state.userScenes[0] || "";
       const snippet = scene.length > 40 ? scene.substring(0, 40).trim() + "..." : scene;
-      return `Ha! "${snippet}" -- I can practically see it, ${name}. That is exactly the kind of image that sticks. Hold onto that one.\n\nLet's move to your second stop.`;
+      return `"${snippet}" -- brilliant, ${name}. That one's locked in. Next stop.`;
     }
 
     case "place-object-2": {
       const a = state.assignments[1];
       if (!a) return "";
-      return `You're at ${aStop(1)} now, and I'm handing you ${a.object}.\n\nSame thing, ${name} -- make it yours. What absurd thing is ${a.object} doing at ${aStop(1)}? The funnier, the better. Paint me a picture.`;
+      return `${aStop(1).charAt(0).toUpperCase() + aStop(1).slice(1)}. The object is ${a.object}. Picture something absurd. What's happening?`;
     }
 
     case "mirror-object-2": {
       const scene = state.userScenes[1] || "";
       const snippet = scene.length > 40 ? scene.substring(0, 40).trim() + "..." : scene;
-      return `Oh, that's brilliant. "${snippet}" -- you really have a knack for this, ${name}. That image is locked in.\n\nOne more to go. You're doing beautifully.`;
+      return `"${snippet}" -- perfect, ${name}. Two down, one to go.`;
     }
 
     case "place-object-3": {
       const a = state.assignments[2];
       if (!a) return "";
-      return `Last one, ${name}. You're at ${aStop(2)}, and the object is ${a.object}.\n\nLet your imagination run completely wild on this one. What do you see?`;
+      return `Last one. ${aStop(2).charAt(0).toUpperCase() + aStop(2).slice(1)}, and the object is ${a.object}. Go wild. What do you see?`;
     }
 
     case "mirror-object-3": {
       const scene = state.userScenes[2] || "";
       const snippet = scene.length > 40 ? scene.substring(0, 40).trim() + "..." : scene;
-      return `"${snippet}" -- I love it, ${name}. All three are planted. Your Memory Palace is alive!\n\nNow here comes the real test. I'm going to walk you back through ${place.toLowerCase()}, and this time, you tell me what you see at each stop. No pressure -- this is just practice, and whatever you remember is a win.`;
+      return `"${snippet}" -- love it. All three planted, ${name}. Your Memory Palace is alive!\n\nNow the real test. I'll walk you back through ${place.toLowerCase()} and you tell me what you see at each stop. No pressure -- whatever you remember is a win.`;
     }
 
     case "walkthrough-intro":
-      return `Take a breath, ${name}. Close your eyes if you like. You're standing at the entrance of ${place.toLowerCase()}. You know this place. You've been here before.\n\nNow, walk to your first stop...`;
+      return `Close your eyes if you like, ${name}. You're at the entrance of ${place.toLowerCase()}. Walk to your first stop...`;
 
     case "recall-1":
-      return `You're at ${aStop(0)}. Something strange is happening here. What is it? What do you see, ${name}?`;
+      return `${aStop(0).charAt(0).toUpperCase() + aStop(0).slice(1)}. Something strange is here. What do you see?`;
 
     case "react-recall-1": {
       const a = state.assignments[0];
@@ -172,13 +172,13 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       const keyword = extractKeyword(a?.object || "");
       const isCorrect = answer.toLowerCase().includes(keyword);
       if (isCorrect) {
-        return `Yes! ${a?.object}! See, ${name}? Your brain held onto that image. That's the palace at work.\n\nKeep going -- walk to your next stop...`;
+        return `Yes! ${a?.object}! That's the palace at work, ${name}. Keep walking...`;
       }
-      return `It was ${a?.object}. And you know what, ${name}? That's completely fine. The first time through, even the pros miss some. The image is planted -- it just needs a little watering.\n\nLet's keep walking...`;
+      return `It was ${a?.object}. No worries -- the image is planted, it just needs practice. Keep walking...`;
     }
 
     case "recall-2":
-      return `You're at ${aStop(1)} now. Look around. Something is definitely out of place here. What is it?`;
+      return `${aStop(1).charAt(0).toUpperCase() + aStop(1).slice(1)}. Something's out of place. What is it?`;
 
     case "react-recall-2": {
       const a = state.assignments[1];
@@ -186,13 +186,13 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       const keyword = extractKeyword(a?.object || "");
       const isCorrect = answer.toLowerCase().includes(keyword);
       if (isCorrect) {
-        return `That's the one! ${a?.object}! Oh, ${name}, your palace is working beautifully.\n\nOne more. Last stop...`;
+        return `${a?.object} -- you got it, ${name}! One more. Last stop...`;
       }
-      return `That was ${a?.object}. Don't you worry, ${name}. Every time you walk through ${place.toLowerCase()} in your mind, these pictures get sharper and sharper.\n\nLet's see about your last stop...`;
+      return `That was ${a?.object}. Each walk through makes it sharper. Last stop...`;
     }
 
     case "recall-3":
-      return `And here you are at ${aStop(2)}. Last one, ${name}. What wild thing is waiting for you?`;
+      return `${aStop(2).charAt(0).toUpperCase() + aStop(2).slice(1)}. Last one. What's waiting for you here?`;
 
     case "react-recall-3": {
       const a = state.assignments[2];
@@ -200,9 +200,9 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       const keyword = extractKeyword(a?.object || "");
       const isCorrect = answer.toLowerCase().includes(keyword);
       if (isCorrect) {
-        return `${a?.object} -- you got it, ${name}! Brilliant finish!`;
+        return `${a?.object} -- brilliant finish, ${name}!`;
       }
-      return `That one was ${a?.object}. And honestly, ${name}, the fact that you walked through your whole palace just now? That takes real courage. The pictures will get clearer, I promise you.`;
+      return `That one was ${a?.object}. The pictures will get clearer with practice, ${name}.`;
     }
 
     case "final": {
