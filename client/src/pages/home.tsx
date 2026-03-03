@@ -7,6 +7,7 @@ import { ProgressBar } from "@/components/progress-bar";
 import {
   type BeatId,
   type ConversationState,
+  createFreshState,
   getTimbukMessage,
   getNextBeat,
   beatNeedsUserInput,
@@ -14,6 +15,17 @@ import {
   getInputPlaceholder,
   getProgressStep,
 } from "@/components/beat-engine";
+import {
+  loadProgress,
+  saveProgress,
+  clearProgress,
+  initProgress,
+  getYesterdaySession,
+  computeNextLevel,
+  shouldSwitchCategory,
+  recordSession,
+  hasCompletedToday,
+} from "@/lib/progress";
 import { apiRequest } from "@/lib/queryClient";
 import { Brain, RotateCcw, ArrowRight, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,20 +49,15 @@ export default function Home() {
   const [showSparkButton, setShowSparkButton] = useState(false);
   const [sparkLoading, setSparkLoading] = useState(false);
   const [typewriterBusy, setTypewriterBusy] = useState(false);
-  const [state, setState] = useState<ConversationState>({
-    userName: "",
-    placeName: "",
-    stops: [],
-    assignments: [],
-    userScenes: [],
-    userAnswers: [],
-    correctCount: 0,
-  });
+  const [state, setState] = useState<ConversationState>(createFreshState());
 
   const msgIdRef = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const processingRef = useRef(false);
   const typewriterResolveRef = useRef<(() => void) | null>(null);
+  const initRef = useRef(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const progressStep = getProgressStep(currentBeat);
 
@@ -119,15 +126,21 @@ export default function Home() {
       try {
         const response = await apiRequest("POST", "/api/assign-objects", {
           stops: currentState.stops,
+          category: currentState.category,
         });
         const data = await response.json();
-        return { ...currentState, assignments: data.assignments };
+        return { ...currentState, assignments: data.assignments, stepIndex: 0 };
       } catch {
         return null;
       }
     },
     []
   );
+
+  const updateState = useCallback((s: ConversationState) => {
+    stateRef.current = s;
+    setState(s);
+  }, []);
 
   const advanceBeat = useCallback(
     async (beat: BeatId, currentState: ConversationState) => {
@@ -145,8 +158,8 @@ export default function Home() {
           return;
         }
 
-        setState(newState);
-        const nextBeat = getNextBeat("assigning");
+        updateState(newState);
+        const nextBeat = getNextBeat("assigning", newState);
         if (nextBeat) {
           setCurrentBeat(nextBeat);
           await advanceBeat(nextBeat, newState);
@@ -161,6 +174,19 @@ export default function Home() {
 
       if (beat === "final") {
         setIsFinished(true);
+        const progress = loadProgress();
+        if (progress) {
+          const updated = recordSession(progress, {
+            level: currentState.itemCount,
+            category: currentState.category,
+            score: currentState.correctCount,
+            totalItems: currentState.itemCount,
+            assignments: currentState.assignments,
+            placeName: currentState.placeName,
+            stops: currentState.stops,
+          });
+          saveProgress(updated);
+        }
         return;
       }
 
@@ -171,66 +197,164 @@ export default function Home() {
 
       if (beatNeedsUserInput(beat)) {
         setInputEnabled(true);
-        if (beat === "place-object-1" || beat === "place-object-2" || beat === "place-object-3") {
-          setShowSparkButton(true);
-        } else {
-          setShowSparkButton(false);
-        }
+        setShowSparkButton(beat === "place-object");
         return;
       }
 
-      const next = getNextBeat(beat);
+      const next = getNextBeat(beat, currentState);
       if (next) {
+        let nextState = currentState;
+        if (
+          (beat === "react-stop" && next === "ask-stop") ||
+          (beat === "mirror-object" && next === "place-object") ||
+          (beat === "react-recall" && next === "recall") ||
+          (beat === "react-check-in" && next === "check-in-recall")
+        ) {
+          nextState = { ...currentState, stepIndex: currentState.stepIndex + 1 };
+          updateState(nextState);
+        }
+        if (beat === "react-stop" && next === "assigning") {
+          nextState = { ...currentState, stepIndex: 0 };
+          updateState(nextState);
+        }
+        if (beat === "react-check-in" && (next === "check-in-done" || next === "graduation-offer" || next === "welcome")) {
+          nextState = { ...currentState, stepIndex: 0 };
+          updateState(nextState);
+        }
+        if (beat === "mirror-object" && next === "walkthrough-intro") {
+          nextState = { ...currentState, stepIndex: 0 };
+          updateState(nextState);
+        }
+        if (beat === "react-recall" && next === "final") {
+          nextState = currentState;
+        }
+        if (beat === "check-in-done") {
+          nextState = { ...currentState, stepIndex: 0 };
+          updateState(nextState);
+        }
         setCurrentBeat(next);
-        await advanceBeat(next, currentState);
+        await advanceBeat(next, nextState);
       }
     },
-    [showTimbukWithTypewriter, addTimbukInstant, scrollToBottom, fetchAssignments]
+    [showTimbukWithTypewriter, addTimbukInstant, scrollToBottom, fetchAssignments, updateState]
   );
+
+  const advanceBeatRef = useRef(advanceBeat);
+  advanceBeatRef.current = advanceBeat;
+
+  useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+
+    const progress = loadProgress();
+    if (progress && progress.userName && progress.hasSeenEducation) {
+      if (hasCompletedToday(progress)) {
+        setPhase("chat");
+        const s = createFreshState();
+        s.userName = progress.userName;
+        s.itemCount = progress.currentLevel;
+        s.category = progress.currentCategory;
+        s.isReturningUser = true;
+        updateState(s);
+        setIsFinished(true);
+        setTimeout(() => {
+          const id = ++msgIdRef.current;
+          setMessages([{
+            id,
+            sender: "timbuk",
+            text: `Welcome back, ${progress.userName}! You've already completed today's walk. Come back tomorrow for a new challenge!`,
+          }]);
+        }, 200);
+        return;
+      }
+
+      const yesterday = getYesterdaySession(progress);
+      const nextLevel = computeNextLevel(progress);
+      const switchCat = shouldSwitchCategory(progress);
+      const newCategory = switchCat ? "names" as const : progress.currentCategory;
+
+      const s = createFreshState();
+      s.userName = progress.userName;
+      s.isReturningUser = true;
+      s.category = newCategory;
+      s.itemCount = progress.currentLevel;
+
+      if (yesterday) {
+        s.checkInAssignments = yesterday.assignments;
+        s.checkInPlace = yesterday.placeName;
+
+        if (yesterday.score === yesterday.totalItems && nextLevel > progress.currentLevel) {
+          s.graduatedLevel = nextLevel;
+        }
+
+        updateState(s);
+        setPhase("chat");
+        setTimeout(() => {
+          setCurrentBeat("check-in-intro");
+          advanceBeatRef.current("check-in-intro", s);
+        }, 300);
+      } else {
+        updateState(s);
+        setPhase("chat");
+        setTimeout(() => {
+          advanceBeatRef.current("welcome", s);
+        }, 300);
+      }
+      return;
+    }
+  }, [updateState]);
 
   const handleEducationComplete = useCallback(() => {
     setPhase("name");
   }, []);
 
   const handleNameSubmit = useCallback((name: string) => {
-    const updatedState = { ...state, userName: name };
-    setState(updatedState);
+    const progress = loadProgress();
+    if (progress) {
+      progress.userName = name;
+      progress.hasSeenEducation = true;
+      saveProgress(progress);
+    } else {
+      saveProgress(initProgress(name));
+    }
+
+    const s = { ...stateRef.current, userName: name };
+    updateState(s);
     setPhase("chat");
     setTimeout(() => {
-      advanceBeat("welcome", updatedState);
+      advanceBeatRef.current("welcome", s);
     }, 200);
-  }, [state, advanceBeat]);
+  }, [updateState]);
 
   const handleContinue = useCallback(async () => {
     if (processingRef.current) return;
     processingRef.current = true;
     setShowContinue(false);
 
-    const next = getNextBeat(currentBeat);
+    const s = stateRef.current;
+    const next = getNextBeat(currentBeat, s);
     if (next) {
       setCurrentBeat(next);
-      await advanceBeat(next, state);
+      await advanceBeatRef.current(next, s);
     }
     processingRef.current = false;
-  }, [currentBeat, state, advanceBeat]);
+  }, [currentBeat]);
 
   const handleRetry = useCallback(async () => {
     if (processingRef.current) return;
     processingRef.current = true;
     setGenError(false);
     setCurrentBeat("assigning");
-    await advanceBeat("assigning", state);
+    await advanceBeatRef.current("assigning", stateRef.current);
     processingRef.current = false;
-  }, [state, advanceBeat]);
+  }, []);
 
   const handleSpark = useCallback(async () => {
     if (sparkLoading) return;
     setSparkLoading(true);
 
-    const objectIndex =
-      currentBeat === "place-object-1" ? 0 :
-      currentBeat === "place-object-2" ? 1 : 2;
-    const assignment = state.assignments[objectIndex];
+    const s = stateRef.current;
+    const assignment = s.assignments[s.stepIndex];
 
     if (!assignment) {
       setSparkLoading(false);
@@ -241,17 +365,17 @@ export default function Home() {
       const response = await apiRequest("POST", "/api/spark", {
         object: assignment.object,
         stopName: assignment.stopName,
-        placeName: state.placeName,
+        placeName: s.placeName,
       });
       const data = await response.json();
       if (data.spark) {
-        addTimbukInstant(`Here's a little nudge to get you going: "${data.spark}"\n\nBut that's just a starting point, ${state.userName}. Make it yours -- what do you actually see?`);
+        addTimbukInstant(`Here's a little nudge: "${data.spark}"\n\nBut make it yours, ${s.userName}. What do you actually see?`);
       }
     } catch {
-      addTimbukInstant("Hmm, my imagination took a coffee break on that one. No worries -- just tell me the first silly thing that pops into your head!");
+      addTimbukInstant("Hmm, my imagination took a coffee break. No worries -- just tell me the first silly thing that pops into your head!");
     }
     setSparkLoading(false);
-  }, [currentBeat, state, sparkLoading, addTimbukInstant]);
+  }, [sparkLoading, addTimbukInstant]);
 
   const handleUserInput = useCallback(
     async (text: string) => {
@@ -261,89 +385,89 @@ export default function Home() {
       setShowSparkButton(false);
       addUserMessage(text);
 
-      let updatedState = { ...state };
+      let s = { ...stateRef.current };
       const beat = currentBeat;
+      const idx = s.stepIndex;
 
       switch (beat) {
-        case "ask-place":
-          updatedState = { ...updatedState, placeName: text };
-          break;
-
-        case "ask-stop-1":
-          updatedState = { ...updatedState, stops: [text] };
-          break;
-
-        case "ask-stop-2":
-          updatedState = { ...updatedState, stops: [...updatedState.stops, text] };
-          break;
-
-        case "ask-stop-3":
-          updatedState = { ...updatedState, stops: [...updatedState.stops, text] };
-          break;
-
-        case "place-object-1":
-        case "place-object-2":
-        case "place-object-3": {
-          const sceneIndex =
-            beat === "place-object-1" ? 0 :
-            beat === "place-object-2" ? 1 : 2;
-          const newScenes = [...updatedState.userScenes];
-          newScenes[sceneIndex] = text;
-          updatedState = { ...updatedState, userScenes: newScenes };
+        case "check-in-recall": {
+          const newAnswers = [...s.checkInAnswers];
+          newAnswers[idx] = text;
+          const a = s.checkInAssignments[idx];
+          let addCorrect = 0;
+          if (a) {
+            const keyword = a.object
+              .replace(/^a\s+/i, "")
+              .replace(/^an\s+/i, "")
+              .replace(/^the\s+/i, "")
+              .split(" ").pop()?.toLowerCase() || "";
+            if (text.toLowerCase().includes(keyword)) addCorrect = 1;
+          }
+          s = { ...s, checkInAnswers: newAnswers, checkInCorrectCount: s.checkInCorrectCount + addCorrect };
           break;
         }
 
-        case "recall-1":
-        case "recall-2":
-        case "recall-3": {
-          const recallIndex =
-            beat === "recall-1" ? 0 : beat === "recall-2" ? 1 : 2;
-          const newAnswers = [...updatedState.userAnswers];
-          newAnswers[recallIndex] = text;
+        case "graduation-offer": {
+          const accepted = /yes|sure|ok|let'?s|go for it|ready|absolutely|definitely/i.test(text);
+          if (accepted && s.graduatedLevel) {
+            s = { ...s, itemCount: s.graduatedLevel };
+            const progress = loadProgress();
+            if (progress) {
+              progress.currentLevel = s.graduatedLevel;
+              saveProgress(progress);
+            }
+          }
+          s = { ...s, graduatedLevel: null };
+          break;
+        }
 
-          const assoc = updatedState.assignments[recallIndex];
+        case "ask-place":
+          s = { ...s, placeName: text };
+          break;
+
+        case "ask-stop":
+          s = { ...s, stops: [...s.stops, text] };
+          break;
+
+        case "place-object": {
+          const newScenes = [...s.userScenes];
+          newScenes[idx] = text;
+          s = { ...s, userScenes: newScenes };
+          break;
+        }
+
+        case "recall": {
+          const newAnswers = [...s.userAnswers];
+          newAnswers[idx] = text;
+          const assoc = s.assignments[idx];
+          let addCorrect = 0;
           if (assoc) {
             const keyword = assoc.object
               .replace(/^a\s+/i, "")
               .replace(/^an\s+/i, "")
               .replace(/^the\s+/i, "")
-              .split(" ")
-              .pop()
-              ?.toLowerCase() || "";
-            const isCorrect = text.toLowerCase().includes(keyword);
-
-            updatedState = {
-              ...updatedState,
-              userAnswers: newAnswers,
-              correctCount: updatedState.correctCount + (isCorrect ? 1 : 0),
-            };
+              .split(" ").pop()?.toLowerCase() || "";
+            if (text.toLowerCase().includes(keyword)) addCorrect = 1;
           }
+          s = { ...s, userAnswers: newAnswers, correctCount: s.correctCount + addCorrect };
           break;
         }
       }
 
-      setState(updatedState);
+      updateState(s);
 
-      const next = getNextBeat(beat);
+      const next = getNextBeat(beat, s);
       if (next) {
         setCurrentBeat(next);
-        await advanceBeat(next, updatedState);
+        await advanceBeatRef.current(next, s);
       }
       processingRef.current = false;
     },
-    [currentBeat, state, addUserMessage, advanceBeat]
+    [currentBeat, addUserMessage, updateState]
   );
 
   const handleRestart = () => {
-    const freshState: ConversationState = {
-      userName: "",
-      placeName: "",
-      stops: [],
-      assignments: [],
-      userScenes: [],
-      userAnswers: [],
-      correctCount: 0,
-    };
+    clearProgress();
     setPhase("education");
     setMessages([]);
     setCurrentBeat("welcome");
@@ -356,12 +480,44 @@ export default function Home() {
     setSparkLoading(false);
     setTypewriterBusy(false);
     typewriterResolveRef.current = null;
-    setState(freshState);
+    updateState(createFreshState());
     msgIdRef.current = 0;
     processingRef.current = false;
+    initRef.current = false;
+  };
+
+  const handleNewPalace = () => {
+    setMessages([]);
+    setCurrentBeat("welcome");
+    setIsTyping(false);
+    setInputEnabled(false);
+    setShowContinue(false);
+    setIsFinished(false);
+    setGenError(false);
+    setShowSparkButton(false);
+    setSparkLoading(false);
+    setTypewriterBusy(false);
+    typewriterResolveRef.current = null;
+
+    const progress = loadProgress();
+    const s = createFreshState();
+    if (progress) {
+      s.userName = progress.userName;
+      s.itemCount = progress.currentLevel;
+      s.category = progress.currentCategory;
+      s.isReturningUser = true;
+    }
+    updateState(s);
+    msgIdRef.current = 0;
+    processingRef.current = false;
+
+    setTimeout(() => {
+      advanceBeatRef.current("welcome", s);
+    }, 200);
   };
 
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : -1;
+  const levelLabel = state.itemCount > 0 ? `Level ${Math.ceil((state.itemCount - 1) / 2)} -- ${state.itemCount} items` : "";
 
   if (phase === "education") {
     return (
@@ -431,7 +587,9 @@ export default function Home() {
               <h1 className="text-lg font-semibold tracking-tight" data-testid="text-app-title">
                 MemoryAmble
               </h1>
-              <p className="text-sm text-muted-foreground">Coach Timbuk</p>
+              <p className="text-sm text-muted-foreground" data-testid="text-level-info">
+                {levelLabel || "Coach Timbuk"}
+              </p>
             </div>
           </div>
           {isFinished && (
@@ -476,16 +634,28 @@ export default function Home() {
       <div className="border-t border-border/50 bg-background/80 backdrop-blur-sm shrink-0">
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-4">
           {isFinished ? (
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <Button
                 size="lg"
-                onClick={handleRestart}
+                onClick={handleNewPalace}
                 className="gap-2"
-                data-testid="button-restart-bottom"
+                data-testid="button-new-palace"
               >
-                <RotateCcw className="w-5 h-5" />
-                Try Again with a New Palace
+                <ArrowRight className="w-5 h-5" />
+                Build Another Palace
               </Button>
+              <div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRestart}
+                  className="gap-2 text-muted-foreground"
+                  data-testid="button-restart-bottom"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Reset Everything
+                </Button>
+              </div>
             </div>
           ) : genError ? (
             <div className="text-center">
@@ -515,7 +685,7 @@ export default function Home() {
             <div className="space-y-2">
               <ChatInput
                 onSend={handleUserInput}
-                placeholder={getInputPlaceholder(currentBeat)}
+                placeholder={getInputPlaceholder(currentBeat, state)}
                 disabled={!inputEnabled || isTyping || typewriterBusy}
               />
               {showSparkButton && inputEnabled && !typewriterBusy && (

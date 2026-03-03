@@ -30,13 +30,37 @@ const RANDOM_OBJECTS = [
   "a floating teapot",
 ];
 
-function pickRandomObjects(count: number): string[] {
-  const shuffled = [...RANDOM_OBJECTS].sort(() => Math.random() - 0.5);
+const RANDOM_NAMES = [
+  "Margaret",
+  "Frederick",
+  "Dorothy",
+  "Winston",
+  "Beatrice",
+  "Theodore",
+  "Gladys",
+  "Reginald",
+  "Florence",
+  "Archibald",
+  "Penelope",
+  "Barnaby",
+  "Constance",
+  "Humphrey",
+  "Millicent",
+  "Leopold",
+  "Cordelia",
+  "Percival",
+  "Harriet",
+  "Montague",
+];
+
+function pickRandom(list: string[], count: number): string[] {
+  const shuffled = [...list].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }
 
-const assignObjectsSchema = z.object({
-  stops: z.array(z.string()).length(3),
+const assignItemsSchema = z.object({
+  stops: z.array(z.string()).min(3).max(9),
+  category: z.enum(["objects", "names"]).default("objects"),
 });
 
 const sparkSchema = z.object({
@@ -51,15 +75,17 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   app.post("/api/assign-objects", (req, res) => {
-    const parsed = assignObjectsSchema.safeParse(req.body);
+    const parsed = assignItemsSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid request" });
     }
 
-    const objects = pickRandomObjects(3);
-    const assignments = parsed.data.stops.map((stop, i) => ({
+    const { stops, category } = parsed.data;
+    const pool = category === "names" ? RANDOM_NAMES : RANDOM_OBJECTS;
+    const items = pickRandom(pool, stops.length);
+    const assignments = stops.map((stop, i) => ({
       stopName: stop,
-      object: objects[i],
+      object: items[i],
     }));
 
     res.json({ assignments });
