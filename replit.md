@@ -7,13 +7,19 @@ A memory training web app for seniors (ages 70+) that uses the Memory Palace tec
 - **Frontend**: React + Vite + Tailwind CSS + shadcn/ui + Framer Motion
 - **Backend**: Express.js with item assignment, AI spark hints, and auth/progress APIs
 - **AI**: OpenAI gpt-4o-mini (only for optional "spark" hints during co-creation)
-- **Auth**: Replit Auth (login with Replit account)
+- **Auth**: Supabase Auth (Google + Email/Password); JWT verified server-side
 - **Database**: PostgreSQL via Drizzle ORM
 - **Persistence**: DB for progress, sessions, palaces; localStorage only for education-seen flag
 
+## Routing
+
+- `/` - Public landing page (landing.tsx)
+- `/login` - Supabase auth page with Google + Email/Password (login.tsx)
+- `/amble` - Protected training chat page (amble.tsx)
+
 ## Level-Based Progression System
 
-- **Levels**: Item count starts at 3, graduates by +2 on a perfect score (3 -> 5 -> 7 -> 9, max 10)
+- **Levels**: Item count starts at 3, graduates by +2 on a perfect score (3 -> 5 -> 7 -> 9, max 9)
 - **Categories**: Starts with "objects", switches to "names" after 7 consecutive object days
 - **Cleaning**: After recall, Timbuk guides a "palace wipe" (after day 1)
 - **Reverse**: Recall phase walks stops in reverse order on even days (after day 2)
@@ -71,42 +77,44 @@ A memory training web app for seniors (ages 70+) that uses the Memory Palace tec
 
 ## File Structure
 
-- `client/src/pages/home.tsx` - Main page: auth gate, education, chat, progression logic
+- `client/src/pages/landing.tsx` - Public landing page with hero and CTA
+- `client/src/pages/login.tsx` - Supabase auth: Google + Email/Password
+- `client/src/pages/amble.tsx` - Protected training chat with beat engine
+- `client/src/lib/supabase.ts` - Supabase client (uses VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY)
 - `client/src/lib/progress.ts` - Pure utility: getLessonConfig, getNextLevel, shouldSwitchCategory
 - `client/src/components/beat-engine.ts` - Dynamic beat flow, coaching messages, state machine
 - `client/src/components/education-slides.tsx` - 3 educational slides
-- `client/src/components/name-entry.tsx` - Dedicated name input screen (unused, kept for reference)
 - `client/src/components/progress-bar.tsx` - 5-step progress indicator
 - `client/src/components/chat-message.tsx` - Chat bubble with typewriter effect
 - `client/src/components/chat-input.tsx` - Text input with mic button
-- `client/src/hooks/use-auth.ts` - Replit Auth hook
+- `client/src/hooks/use-auth.ts` - Supabase auth hook (session, user, signOut)
+- `server/auth.ts` - Supabase JWT verification middleware
 - `server/routes.ts` - All API routes (assign-objects, spark, progress, palaces, sessions)
 - `server/db.ts` - Database connection
 - `shared/schema.ts` - Drizzle schema (palaces, userProgress, sessionHistory, Assignment type)
-- `server/replit_integrations/auth/` - Replit Auth blueprint
 
 ## DB Schema
 
 - `user_progress`: id, userId, currentDay, currentLevel, currentCategory, dayCount, streak, lastLogin
 - `session_history`: id, userId, date, level, category, score, totalItems, assignmentsJson, placeName, stopsJson
 - `palaces`: id, userId, locationName, position
-- `users`: Replit Auth users table
-- `sessions`: Replit Auth sessions table (do not modify)
 
 ## API Endpoints
 
 - `POST /api/assign-objects` - Assigns random objects/names to stops. Body: `{stops, category}`
 - `POST /api/spark` - AI generates a short hint (gpt-4o-mini)
-- `GET /api/progress` - Get user's progression data (auth required)
-- `POST /api/progress` - Save progression data (auth required)
+- `GET /api/progress` - Get user's progression data (auth required, Bearer token)
+- `POST /api/progress` - Save progression data (auth required, Bearer token)
 - `GET /api/sessions/latest` - Get most recent session for check-in (auth required)
 - `POST /api/sessions` - Save a completed session (auth required)
 - `GET /api/palaces` - Get user's palace locations (auth required)
 - `POST /api/palaces` - Save palace locations (auth required)
-- Auth routes: `/api/login`, `/api/logout`, `/api/callback`, `/api/auth/user`
 
 ## Environment Variables
 
 - `OPENAI_API_KEY` - OpenAI API key (for spark hints)
-- `SESSION_SECRET` - Express session secret
 - `DATABASE_URL` - PostgreSQL connection string
+- `SUPABASE_URL` - Supabase project URL (server-side)
+- `SUPABASE_ANON_KEY` - Supabase anonymous key (server-side)
+- `VITE_SUPABASE_URL` - Supabase project URL (client-side, same value as SUPABASE_URL)
+- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key (client-side, same value as SUPABASE_ANON_KEY)

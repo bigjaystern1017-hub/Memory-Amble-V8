@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "./db";
 import { palaces, userProgress, sessionHistory } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { isAuthenticated } from "./replit_integrations/auth";
+import { isAuthenticated } from "./auth";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -148,7 +148,7 @@ export async function registerRoutes(
 
   app.get("/api/progress", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const [progress] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
       if (!progress) {
         return res.json({
@@ -169,7 +169,7 @@ export async function registerRoutes(
 
   app.post("/api/progress", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const parsed = saveProgressSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: "Invalid request" });
@@ -218,7 +218,7 @@ export async function registerRoutes(
 
   app.get("/api/palaces", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const locations = await db
         .select()
         .from(palaces)
@@ -233,7 +233,7 @@ export async function registerRoutes(
 
   app.post("/api/palaces", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const parsed = savePalaceSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: "Invalid request" });
@@ -266,7 +266,7 @@ export async function registerRoutes(
 
   app.get("/api/sessions", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const rows = await db
         .select()
         .from(sessionHistory)
@@ -286,7 +286,7 @@ export async function registerRoutes(
 
   app.get("/api/sessions/latest", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const [row] = await db
         .select()
         .from(sessionHistory)
@@ -311,7 +311,7 @@ export async function registerRoutes(
 
   app.post("/api/sessions", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const parsed = saveSessionSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: "Invalid request" });
