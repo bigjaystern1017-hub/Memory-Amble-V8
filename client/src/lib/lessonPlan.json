@@ -1,53 +1,47 @@
-{
-  "curriculum": [
-    {
-      "day": 1,
-      "title": "The Spark",
-      "itemCount": 3,
-      "focus": "Vivid Colors",
-      "coachNote": "Focus on high-contrast colors. Keep it very encouraging."
-    },
-    {
-      "day": 2,
-      "title": "The Sensory Hub",
-      "itemCount": 5,
-      "focus": "Smell and Sound",
-      "coachNote": "Ask Gladys what the object smells like. Add 2 new stops."
-    },
-    {
-      "day": 3,
-      "title": "The Action Move",
-      "itemCount": 5,
-      "focus": "Motion",
-      "coachNote": "Make the objects move! A spinning pizza, a dancing duck."
-    },
-    {
-      "day": 4,
-      "title": "The Scale Up",
-      "itemCount": 8,
-      "focus": "Spatial Detail",
-      "coachNote": "Start moving into a second room of the house."
-    },
-    {
-      "day": 5,
-      "title": "The Master Walk",
-      "itemCount": 10,
-      "focus": "Reverse Recall",
-      "coachNote": "The big challenge: Walk through all 10 items backwards."
-    },
-    {
-      "day": 6,
-      "title": "The Palace Wipe",
-      "itemCount": 0,
-      "focus": "Clearing Space",
-      "coachNote": "Teach the 'fresh breeze' technique to clear the palace for new memories."
-    },
-    {
-      "day": 7,
-      "title": "Real World Utility",
-      "itemCount": 5,
-      "focus": "Shopping Lists",
-      "coachNote": "Use the palace for a real 5-item grocery list."
-    }
-  ]
-}
+[
+  {
+    "day": 1,
+    "title": "The Foundation",
+    "focus": "Vivid Imagery",
+    "itemCount": 3,
+    "cleaningPhase": false,
+    "reverse": false,
+    "intro": "Welcome! Today we build your palace. Just 3 items."
+  },
+  {
+    "day": 2,
+    "title": "The Expansion",
+    "focus": "Making Space",
+    "itemCount": 5,
+    "cleaningPhase": true,
+    "reverse": false,
+    "intro": "Welcome back! Let's clear out yesterday's items and add 2 new spots."
+  },
+  {
+    "day": 3,
+    "title": "The Reverse",
+    "focus": "Agility",
+    "itemCount": 5,
+    "cleaningPhase": true,
+    "reverse": true,
+    "intro": "Today is tricky. We're going to recall them backwards!"
+  },
+  {
+    "day": 4,
+    "title": "The Stretch",
+    "focus": "Volume",
+    "itemCount": 8,
+    "cleaningPhase": true,
+    "reverse": false,
+    "intro": "You're doing great. Let's push to 8 items."
+  },
+  {
+    "day": 5,
+    "title": "The Graduation",
+    "focus": "Mastery",
+    "itemCount": 10,
+    "cleaningPhase": true,
+    "reverse": true,
+    "intro": "The final test. 10 items, backwards and forwards."
+  }
+]
