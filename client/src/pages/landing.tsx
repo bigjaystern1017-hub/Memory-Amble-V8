@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 export default function Landing() {
   const [, navigate] = useLocation();
   const { isAuthenticated, signOut, displayName } = useAuth();
+  
+  const saved = localStorage.getItem("memoryamble_current_day");
+  const currentDay = saved ? parseInt(saved, 10) : 1;
 
   return (
     <div className="min-h-dvh bg-background" data-testid="landing-page">
@@ -79,7 +82,7 @@ export default function Landing() {
               className="gap-2 text-lg px-8 py-6"
               data-testid="button-start-amble"
             >
-              Start My Amble
+              {isAuthenticated ? `Continue Day ${currentDay}` : "Start My Amble"}
               <ArrowRight className="w-5 h-5" />
             </Button>
           </div>
@@ -142,7 +145,7 @@ export default function Landing() {
               className="gap-2 text-lg px-8 py-6"
               data-testid="button-start-amble-bottom"
             >
-              Start My Amble
+              {isAuthenticated ? `Continue Day ${currentDay}` : "Start My Amble"}
               <ArrowRight className="w-5 h-5" />
             </Button>
           </div>

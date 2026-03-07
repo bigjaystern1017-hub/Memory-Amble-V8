@@ -352,10 +352,41 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid currentDay" });
       }
       const userId = req.user.id;
+      
+      await db
+        .update(userProgress)
+        .set({ currentDay })
+        .where(eq(userProgress.userId, userId));
+      
       res.json({ success: true, currentDay });
     } catch (error) {
       console.error("Error saving current day:", error);
       res.status(500).json({ error: "Failed to save current day" });
+    }
+  });
+
+  app.get("/api/user/progress", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const progress = await db.query.userProgress.findFirst({
+        where: eq(userProgress.userId, userId),
+      });
+      
+      if (!progress) {
+        return res.json({
+          currentDay: 1,
+          currentLevel: 3,
+          currentCategory: "objects",
+          dayCount: 0,
+          streak: 0,
+          lastLogin: null,
+        });
+      }
+      
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching user progress:", error);
+      res.status(500).json({ error: "Failed to fetch progress" });
     }
   });
 

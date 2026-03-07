@@ -17,20 +17,27 @@ A memory training web app for seniors (ages 70+) that uses the Memory Palace tec
 - `/login` - Supabase auth page with Google + Email/Password (login.tsx)
 - `/amble` - Training chat page (amble.tsx) -- guests can play Day 1 without signing in
 
-## Level-Based Progression System
+## 5-Day Bootcamp Curriculum (Hard-Coded)
 
-- **Levels**: Item count starts at 3, graduates by +2 on a perfect score (3 -> 5 -> 7 -> 9, max 9)
-- **Categories**: Starts with "objects", switches to "names" after 7 consecutive object days
-- **Cleaning**: After recall, Timbuk guides a "palace wipe" (after day 1)
-- **Reverse**: Recall phase walks stops in reverse order on even days (after day 2)
+Consistent, professional 5-day progression:
+1. **Day 1: The Foundation** - 3 items, Vivid Imagery, no cleaning, no reverse
+2. **Day 2: The Expansion** - 5 items, Making Space, cleaning, no reverse
+3. **Day 3: The Reverse** - 5 items, Mental Agility, cleaning, reverse recall
+4. **Day 4: The Stretch** - 8 items, Volume, cleaning, no reverse
+5. **Day 5: The Graduation** - 10 items, Mastery, cleaning, reverse recall
+
+- **Categories**: All days use "objects" category (future: may switch to "names" after bootcamp)
+- **Cleaning**: Palace wipe (Fresh Breeze technique) on Days 2-5
+- **Reverse**: Recall walks stops backward on Days 3 & 5
 - **Streaks**: Tracked server-side based on consecutive daily logins
 
 ## Daily Progression Flow
 
-- **First visit**: Education slides -> Day 1 (3 items, objects)
-- **Returning user**: Check-in on yesterday's items -> today's lesson at current level
-- **Graduation**: Perfect score (100%) -> level up by +2 items next session
-- **Category switch**: After 7 days of objects -> switch to names
+- **First visit**: Education slides -> Name Entry -> Day 1 (3 items, "The Foundation")
+- **Returning user**: Education already seen -> Name Entry (for guests only) -> Day N lesson
+- **Session completion**: currentDay saved to DB (for auth users) or localStorage (for guests)
+- **Page refresh**: App reads currentDay from storage and resumes at same day
+- **Curriculum-driven**: Item count, title, focus, cleaning, and reverse flags all from BOOTCAMP_CURRICULUM
 
 ## App Flow
 
@@ -77,21 +84,23 @@ A memory training web app for seniors (ages 70+) that uses the Memory Palace tec
 
 ## File Structure
 
-- `client/src/pages/landing.tsx` - Public landing page with hero and CTA
+- `client/src/pages/landing.tsx` - Public landing page with hero and CTA; shows "Continue Day X" for authenticated users
 - `client/src/pages/login.tsx` - Supabase auth: Google + Email/Password
-- `client/src/pages/amble.tsx` - Protected training chat with beat engine
+- `client/src/pages/amble.tsx` - Protected training chat with beat engine; saves currentDay on session completion
 - `client/src/lib/supabase.ts` - Supabase client (uses VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY)
-- `client/src/lib/progress.ts` - Pure utility: getLessonConfig, getNextLevel, shouldSwitchCategory
+- `client/src/lib/progress.ts` - Pure utility: getLessonConfig (uses BOOTCAMP_CURRICULUM), getNextLevel, shouldSwitchCategory
 - `client/src/components/beat-engine.ts` - Dynamic beat flow, coaching messages, state machine
 - `client/src/components/education-slides.tsx` - 3 educational slides
 - `client/src/components/progress-bar.tsx` - 5-step progress indicator
 - `client/src/components/chat-message.tsx` - Chat bubble with typewriter effect
 - `client/src/components/chat-input.tsx` - Text input with mic button
 - `client/src/hooks/use-auth.ts` - Supabase auth hook (session, user, signOut)
+- `client/src/name-entry.tsx` - Name collection for guests and first-time users
 - `server/auth.ts` - Supabase JWT verification middleware
-- `server/routes.ts` - All API routes (assign-objects, spark, progress, palaces, sessions)
+- `server/routes.ts` - All API routes (assign-objects, spark, progress, palaces, sessions, user/current-day, user/progress)
 - `server/db.ts` - Database connection
 - `shared/schema.ts` - Drizzle schema (palaces, userProgress, sessionHistory, Assignment type)
+- `shared/curriculum.ts` - Hard-coded BOOTCAMP_CURRICULUM (5-day progression)
 
 ## DB Schema
 
@@ -103,12 +112,14 @@ A memory training web app for seniors (ages 70+) that uses the Memory Palace tec
 
 - `POST /api/assign-objects` - Assigns random objects/names to stops. Body: `{stops, category}`
 - `POST /api/spark` - AI generates a short hint (gpt-4o-mini)
-- `GET /api/progress` - Get user's progression data (auth required, Bearer token)
-- `POST /api/progress` - Save progression data (auth required, Bearer token)
+- `GET /api/progress` - Get user's progression data (auth required)
+- `POST /api/progress` - Save progression data (auth required)
 - `GET /api/sessions/latest` - Get most recent session for check-in (auth required)
 - `POST /api/sessions` - Save a completed session (auth required)
 - `GET /api/palaces` - Get user's palace locations (auth required)
 - `POST /api/palaces` - Save palace locations (auth required)
+- `POST /api/user/current-day` - Update user's currentDay in DB (auth required). Body: `{currentDay}`
+- `GET /api/user/progress` - Fetch user's full progress from DB (auth required)
 
 ## Environment Variables
 
