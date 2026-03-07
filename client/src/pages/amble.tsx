@@ -295,6 +295,15 @@ export default function Amble() {
         await saveSessionToDB(currentState);
         await savePalaceToDB(currentState.stops);
         await saveProgressToDB(newProgress);
+        
+        if (isGuest) {
+          localStorage.setItem("memoryamble_current_day", String(newProgress.currentDay));
+        } else {
+          await authFetch("/api/user/current-day", {
+            method: "POST",
+            body: JSON.stringify({ currentDay: newProgress.currentDay }),
+          });
+        }
         return;
       }
 
@@ -353,6 +362,17 @@ export default function Amble() {
 
     if (isGuest) {
       const educationSeen = localStorage.getItem("memoryamble_education_seen");
+      const savedDay = localStorage.getItem("memoryamble_current_day");
+      if (savedDay) {
+        setProgressData({
+          currentDay: parseInt(savedDay, 10),
+          currentLevel: 3,
+          currentCategory: "objects",
+          dayCount: 0,
+          streak: 0,
+          lastLogin: null,
+        });
+      }
       if (!educationSeen) {
         setPhase("education");
       } else {

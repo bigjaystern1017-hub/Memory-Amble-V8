@@ -345,5 +345,19 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/user/current-day", isAuthenticated, async (req: any, res) => {
+    try {
+      const { currentDay } = req.body;
+      if (!currentDay || typeof currentDay !== "number") {
+        return res.status(400).json({ error: "Invalid currentDay" });
+      }
+      const userId = req.user.id;
+      res.json({ success: true, currentDay });
+    } catch (error) {
+      console.error("Error saving current day:", error);
+      res.status(500).json({ error: "Failed to save current day" });
+    }
+  });
+
   return httpServer;
 }
