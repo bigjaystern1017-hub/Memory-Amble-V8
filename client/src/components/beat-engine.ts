@@ -1,5 +1,5 @@
 import type { Assignment } from "@shared/schema";
-import type { LessonDay } from "@/lib/progress";
+import type { LessonConfig } from "@/lib/progress";
 
 export type BeatId =
   | "check-in-intro"
@@ -19,6 +19,7 @@ export type BeatId =
   | "recall"
   | "react-recall"
   | "palace-wipe"
+  | "graduation-offer"
   | "final";
 
 export interface ConversationState {
@@ -31,16 +32,19 @@ export interface ConversationState {
   correctCount: number;
   itemCount: number;
   stepIndex: number;
+  category: "objects" | "names";
   checkInAssignments: Assignment[];
   checkInAnswers: string[];
   checkInCorrectCount: number;
   checkInPlace: string;
   isReturningUser: boolean;
-  lessonDay: LessonDay | null;
+  lessonConfig: LessonConfig | null;
+  dayCount: number;
+  graduated: boolean;
 }
 
 export function isReverseRecall(state: ConversationState): boolean {
-  return state.lessonDay?.reverse === true;
+  return state.lessonConfig?.reverse === true;
 }
 
 export function recallAssignmentIndex(stepIndex: number, state: ConversationState): number {
@@ -61,12 +65,15 @@ export function createFreshState(): ConversationState {
     correctCount: 0,
     itemCount: 3,
     stepIndex: 0,
+    category: "objects",
     checkInAssignments: [],
     checkInAnswers: [],
     checkInCorrectCount: 0,
     checkInPlace: "",
     isReturningUser: false,
-    lessonDay: null,
+    lessonConfig: null,
+    dayCount: 0,
+    graduated: false,
   };
 }
 
@@ -103,6 +110,7 @@ export function getProgressStep(beatId: BeatId): number {
   if (rememberBeats.includes(beatId)) return 2;
   if (recallBeats.includes(beatId)) return 3;
   if (beatId === "palace-wipe") return 2;
+  if (beatId === "graduation-offer") return 4;
   if (beatId === "final") return 4;
   return 0;
 }
@@ -131,9 +139,12 @@ function extractKeyword(objectName: string): string {
     ?.toLowerCase() || "";
 }
 
-function coachPrompt(lesson: LessonDay | null): string {
-  if (!lesson) return "";
-  return " Remember to make it bold, vivid, and unique to you.";
+function itemLabel(category: "objects" | "names"): string {
+  return category === "names" ? "names" : "items";
+}
+
+function placeVerb(category: "objects" | "names"): string {
+  return category === "names" ? "imagine meeting" : "place";
 }
 
 export function getTimbukMessage(beatId: BeatId, state: ConversationState): string {
@@ -141,10 +152,12 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
   const place = asPlace(state.placeName);
   const idx = state.stepIndex;
   const total = state.itemCount;
-  const lesson = state.lessonDay;
-  const dayNum = lesson?.day || 1;
+  const lesson = state.lessonConfig;
+  const dayNum = state.dayCount + 1;
   const hasCleaning = lesson?.cleaning === true;
   const hasReverse = lesson?.reverse === true;
+  const cat = state.category;
+  const isNames = cat === "names";
 
   const stop = (i: number) => asStop(state.stops[i] || "");
   const aStop = (i: number) => asStop(state.assignments[i]?.stopName || "");
@@ -199,7 +212,8 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
 
     case "welcome":
       if (state.isReturningUser) {
-        return `Alright, ${name}, welcome to Day ${dayNum}! Today's focus is ${lesson?.focus || "memory"}. We're working with ${total} items. Let's build!`;
+        const catLabel = isNames ? "people's names" : `${total} ${itemLabel(cat)}`;
+        return `Alright, ${name}, welcome to Day ${dayNum}! Today's focus is ${lesson?.focus || "memory"}. We're working with ${catLabel}. Let's build!`;
       }
       return `${name}! What a pleasure. I've been looking forward to our walk together. Today we're going to build something really special -- your very own Memory Palace. It's been around for thousands of years, and honestly? It's a lot of fun. Shall we get started?`;
 
@@ -229,7 +243,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     case "react-stop": {
       if (idx === total - 1) {
         const routeList = state.stops.map((s, i) => `${ordinal(i + 1)}, ${asStop(s)}`).join(".\n");
-        return `${cap(stop(idx))} -- beautiful. So here's your route through ${place.toLowerCase()}:\n\n${routeList}.\n\nThat, ${name}, is the skeleton of your Memory Palace. Now let me find some things to put in it...`;
+        return `${cap(stop(idx))} -- beautiful. So here's your route through ${place.toLowerCase()}:\n\n${routeList}.\n\nThat, ${name}, is the skeleton of your Memory Palace. Now let me find some ${itemLabel(cat)} to ${isNames ? "introduce" : "put in it"}...`;
       }
       if (idx === 0) {
         return `Oh, ${stop(0)} -- I can see it. That's a lovely first stop, ${name}. Keep walking for me. What comes next?`;
@@ -241,6 +255,9 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return "";
 
     case "placement-intro": {
+      if (isNames) {
+        return `Right, ${name}, here's where the fun really starts. I've picked ${total} people, and we're going to imagine meeting each one at your stops. The more vivid and personal the scene, the better you'll remember. Ready?`;
+      }
       return `Right, ${name}, here's where the fun really starts. I've picked ${total} items, and we're going to plant one at each of your stops. The weirder you make the picture, the stickier the memory. Make each one bold, vivid, and unique to you.`;
     }
 
@@ -248,9 +265,17 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       const a = state.assignments[idx];
       if (!a) return "";
       const stopLabel = cap(asStop(a.stopName));
-      const prompt = coachPrompt(lesson);
+      if (isNames) {
+        if (idx === 0) {
+          return `${stopLabel}. Imagine you bump into ${a.object} right here. What are they doing? What do they look like?`;
+        }
+        if (idx === total - 1) {
+          return `Last one. ${stopLabel}, and it's ${a.object}. Picture something memorable about meeting them here. What do you see?`;
+        }
+        return `${stopLabel}. You meet ${a.object}. What's happening?`;
+      }
       if (idx === 0) {
-        return `${stopLabel}. Place ${a.object} right there.${prompt} What do you see happening?`;
+        return `${stopLabel}. Place ${a.object} right there. Remember to make it bold, vivid, and unique to you. What do you see happening?`;
       }
       if (idx === total - 1) {
         return `Last one. ${stopLabel}, and it's ${a.object}. Go wild, ${name} -- make it yours. What do you see?`;
@@ -282,6 +307,15 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       const a = state.assignments[ri];
       if (!a) return "";
       const stopLabel = cap(asStop(a.stopName));
+      if (isNames) {
+        if (idx === 0) {
+          return `${stopLabel}. Someone's here. Who did you meet?`;
+        }
+        if (idx === total - 1) {
+          return `${stopLabel}. Last one. Who's waiting for you?`;
+        }
+        return `${stopLabel}. There's someone here. Who is it?`;
+      }
       if (idx === 0) {
         return `${stopLabel}. Something strange is here. What do you see?`;
       }
@@ -316,9 +350,19 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return `${name}, before we finish, let's clear the palace. Close your eyes and picture yourself at the entrance of ${place.toLowerCase()}. Now imagine a gentle breeze blowing through the whole place. As it passes each stop, the images float away like leaves. Take a slow breath. The palace is clean -- ready for new memories whenever you need it.`;
     }
 
+    case "graduation-offer": {
+      const nextLevel = Math.min(state.itemCount + 2, 9);
+      return `${name}, you got every single one right! That tells me you're ready for more. Next time, we'll step up to ${nextLevel} ${itemLabel(cat)}. Your memory palace is growing!`;
+    }
+
     case "final": {
       const count = state.correctCount;
-      const dayNote = dayNum < 5 ? `\n\nSee you tomorrow for Day ${dayNum + 1}!` : "\n\nYou've completed the full curriculum, " + name + "! You can keep building palaces any time.";
+      const graduated = state.graduated;
+      const levelNote = graduated
+        ? `\n\nYou've levelled up! Next session: ${Math.min(total + 2, 9)} ${itemLabel(cat)}.`
+        : "";
+      const dayNote = `\n\nSee you next time for Day ${dayNum + 1}!${levelNote}`;
+
       if (count === total) {
         return `${name}, ${count} out of ${total}. A perfect walk! You clearly have a wonderful imagination.\n\nYour palace at ${place.toLowerCase()} is yours now. Walk through it in your mind tonight before bed.${dayNote}`;
       }
@@ -340,7 +384,7 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
   const idx = state.stepIndex;
   const total = state.itemCount;
   const checkInTotal = state.checkInAssignments.length;
-  const hasCleaning = state.lessonDay?.cleaning === true;
+  const hasCleaning = state.lessonConfig?.cleaning === true;
 
   switch (current) {
     case "check-in-intro":
@@ -394,9 +438,14 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
     case "react-recall":
       if (idx < total - 1) return "recall";
       if (hasCleaning) return "palace-wipe";
+      if (state.correctCount === total) return "graduation-offer";
       return "final";
 
     case "palace-wipe":
+      if (state.correctCount === total) return "graduation-offer";
+      return "final";
+
+    case "graduation-offer":
       return "final";
 
     case "final":
@@ -418,19 +467,20 @@ export function beatNeedsUserInput(beatId: BeatId): boolean {
 }
 
 export function beatNeedsContinueButton(beatId: BeatId): boolean {
-  return beatId === "welcome" || beatId === "palace-wipe" || beatId === "check-in-done";
+  return beatId === "welcome" || beatId === "palace-wipe" || beatId === "check-in-done" || beatId === "graduation-offer";
 }
 
 export function getInputPlaceholder(beatId: BeatId, state: ConversationState): string {
+  const isNames = state.category === "names";
   switch (beatId) {
     case "ask-place":
       return "Tell me about a place you love...";
     case "ask-stop":
       return "What do you see?";
     case "place-object":
-      return "Describe what you imagine...";
+      return isNames ? "Describe the scene..." : "Describe what you imagine...";
     case "recall":
-      return "What do you see at this stop?";
+      return isNames ? "Who did you meet here?" : "What do you see at this stop?";
     case "check-in-recall":
       return "What was at this stop?";
     default:

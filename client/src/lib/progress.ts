@@ -1,31 +1,18 @@
 import type { Assignment } from "@shared/schema";
 
-export interface LessonDay {
-  day: number;
-  title: string;
+export interface LessonConfig {
   itemCount: number;
-  focus: string;
+  category: "objects" | "names";
   cleaning: boolean;
   reverse: boolean;
+  focus: string;
+  title: string;
 }
 
-export const curriculum: LessonDay[] = [
-  { day: 1, title: "The Foundation", itemCount: 3, focus: "Vivid Imagery", cleaning: false, reverse: false },
-  { day: 2, title: "The Expansion", itemCount: 5, focus: "Making Space", cleaning: true, reverse: false },
-  { day: 3, title: "The Reverse", itemCount: 5, focus: "Mental Agility", cleaning: true, reverse: true },
-  { day: 4, title: "The Stretch", itemCount: 8, focus: "Volume", cleaning: true, reverse: false },
-  { day: 5, title: "The Graduation", itemCount: 10, focus: "Mastery", cleaning: true, reverse: true },
-];
-
-export function getLessonDay(dayNumber: number): LessonDay {
-  const idx = Math.min(dayNumber, curriculum.length) - 1;
-  if (idx < 0) return curriculum[0];
-  return curriculum[idx];
-}
-
-export interface SessionRecord {
+export interface SessionData {
   date: string;
-  day: number;
+  level: number;
+  category: string;
   score: number;
   totalItems: number;
   assignments: Assignment[];
@@ -33,86 +20,80 @@ export interface SessionRecord {
   stops: string[];
 }
 
-export interface UserProgress {
-  userName: string;
+export interface ProgressData {
   currentDay: number;
-  sessions: SessionRecord[];
-  hasSeenEducation: boolean;
+  currentLevel: number;
+  currentCategory: "objects" | "names";
+  dayCount: number;
+  streak: number;
+  lastLogin: string | null;
 }
 
-const STORAGE_KEY = "memoryamble_progress";
-
-const DEFAULT_PROGRESS: UserProgress = {
-  userName: "",
-  currentDay: 1,
-  sessions: [],
-  hasSeenEducation: false,
-};
-
-export function loadProgress(): UserProgress | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as UserProgress;
-  } catch {
-    return null;
+export function getNextLevel(currentLevel: number, lastScore: number, lastTotal: number): number {
+  if (lastTotal > 0 && lastScore === lastTotal) {
+    return Math.min(currentLevel + 2, 9);
   }
+  return currentLevel;
 }
 
-export function saveProgress(progress: UserProgress): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+export function shouldSwitchCategory(dayCount: number, currentCategory: "objects" | "names"): "objects" | "names" {
+  if (currentCategory === "objects" && dayCount >= 7) {
+    return "names";
+  }
+  return currentCategory;
 }
 
-export function clearProgress(): void {
-  localStorage.removeItem(STORAGE_KEY);
+export function getLessonConfig(level: number, dayCount: number, category: "objects" | "names"): LessonConfig {
+  const cleaning = dayCount > 0;
+  const reverse = dayCount >= 2 && dayCount % 2 === 0;
+
+  let focus = "Vivid Imagery";
+  let title = "The Foundation";
+
+  if (dayCount === 0) {
+    focus = "Vivid Imagery";
+    title = "The Foundation";
+  } else if (level <= 3) {
+    focus = "Building Confidence";
+    title = "Warm Up";
+  } else if (level <= 5) {
+    focus = "Expanding Capacity";
+    title = "The Expansion";
+  } else if (level <= 7) {
+    focus = "Mental Agility";
+    title = "The Stretch";
+  } else {
+    focus = "Mastery";
+    title = "The Challenge";
+  }
+
+  if (reverse) {
+    focus += " + Reverse Recall";
+  }
+
+  return {
+    itemCount: level,
+    category,
+    cleaning,
+    reverse,
+    focus,
+    title,
+  };
 }
 
-function todayStr(): string {
+export function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function yesterdayStr(): string {
+export function yesterdayStr(): string {
   const d = new Date();
   d.setDate(d.getDate() - 1);
   return d.toISOString().slice(0, 10);
 }
 
-export function getLastSession(progress: UserProgress): SessionRecord | null {
-  if (progress.sessions.length === 0) return null;
-  return progress.sessions[progress.sessions.length - 1];
-}
-
-export function getYesterdaySession(progress: UserProgress): SessionRecord | null {
-  const last = getLastSession(progress);
-  if (!last) return null;
-  if (last.date === yesterdayStr()) return last;
-  return null;
-}
-
-export function hasCompletedToday(progress: UserProgress): boolean {
-  const last = getLastSession(progress);
-  if (!last) return false;
-  return last.date === todayStr();
-}
-
-export function recordSession(
-  progress: UserProgress,
-  session: Omit<SessionRecord, "date">
-): UserProgress {
-  const record: SessionRecord = { ...session, date: todayStr() };
-  const nextDay = Math.min(progress.currentDay + 1, curriculum.length);
-
-  return {
-    ...progress,
-    currentDay: nextDay,
-    sessions: [...progress.sessions, record],
-  };
-}
-
-export function initProgress(userName: string): UserProgress {
-  return {
-    ...DEFAULT_PROGRESS,
-    userName,
-    hasSeenEducation: true,
-  };
+export function levelLabel(level: number): string {
+  if (level <= 3) return "1";
+  if (level <= 5) return "2";
+  if (level <= 7) return "3";
+  return "4";
 }

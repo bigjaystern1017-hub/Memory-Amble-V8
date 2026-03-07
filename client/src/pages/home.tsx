@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { ChatMessage } from "@/components/chat-message";
 import { ChatInput } from "@/components/chat-input";
 import { EducationSlides } from "@/components/education-slides";
-import { NameEntry } from "@/components/name-entry";
 import { ProgressBar } from "@/components/progress-bar";
 import {
   type BeatId,
@@ -17,17 +16,18 @@ import {
   recallAssignmentIndex,
 } from "@/components/beat-engine";
 import {
-  loadProgress,
-  saveProgress,
-  clearProgress,
-  initProgress,
-  getYesterdaySession,
-  recordSession,
-  hasCompletedToday,
-  getLessonDay,
+  getLessonConfig,
+  getNextLevel,
+  shouldSwitchCategory,
+  todayStr,
+  yesterdayStr,
+  levelLabel,
+  type ProgressData,
+  type SessionData,
 } from "@/lib/progress";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
-import { Brain, RotateCcw, ArrowRight, Lightbulb } from "lucide-react";
+import { Brain, RotateCcw, ArrowRight, Lightbulb, LogOut, User, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Message {
@@ -37,8 +37,41 @@ interface Message {
   typewriter?: boolean;
 }
 
+function LandingPage() {
+  return (
+    <div className="flex flex-col h-dvh bg-background" data-testid="landing-page">
+      <div className="flex-1 flex items-center justify-center px-6">
+        <div className="max-w-md w-full text-center space-y-8">
+          <div className="space-y-4">
+            <div className="w-16 h-16 rounded-xl bg-primary flex items-center justify-center mx-auto">
+              <Brain className="w-10 h-10 text-primary-foreground" />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight" data-testid="text-landing-title">
+              MemoryAmble
+            </h1>
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              Build your very own Memory Palace with Coach Timbuk. A fun, guided programme to sharpen your memory using a technique that's been around for thousands of years.
+            </p>
+          </div>
+          <a href="/api/login" data-testid="button-login">
+            <Button size="lg" className="gap-2 text-lg px-8 py-6">
+              <User className="w-5 h-5" />
+              Sign In to Get Started
+            </Button>
+          </a>
+          <p className="text-sm text-muted-foreground">
+            Sign in with your Replit account to save your progress across sessions.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
-  const [phase, setPhase] = useState<"education" | "name" | "chat">("education");
+  const { user, isLoading: authLoading, isAuthenticated, logout } = useAuth();
+
+  const [phase, setPhase] = useState<"loading" | "education" | "chat">("loading");
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentBeat, setCurrentBeat] = useState<BeatId>("welcome");
   const [isTyping, setIsTyping] = useState(false);
@@ -51,6 +84,15 @@ export default function Home() {
   const [typewriterBusy, setTypewriterBusy] = useState(false);
   const [state, setState] = useState<ConversationState>(createFreshState());
 
+  const [progressData, setProgressData] = useState<ProgressData>({
+    currentDay: 1,
+    currentLevel: 3,
+    currentCategory: "objects",
+    dayCount: 0,
+    streak: 0,
+    lastLogin: null,
+  });
+
   const msgIdRef = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const processingRef = useRef(false);
@@ -60,6 +102,8 @@ export default function Home() {
   stateRef.current = state;
 
   const progressStep = getProgressStep(currentBeat);
+
+  const displayName = user?.firstName || user?.email?.split("@")[0] || "friend";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -124,11 +168,9 @@ export default function Home() {
   const fetchAssignments = useCallback(
     async (currentState: ConversationState): Promise<ConversationState | null> => {
       try {
-        const lesson = currentState.lessonDay;
-        const category = "objects";
         const response = await apiRequest("POST", "/api/assign-objects", {
           stops: currentState.stops,
-          category,
+          category: currentState.category,
         });
         const data = await response.json();
         return { ...currentState, assignments: data.assignments, stepIndex: 0 };
@@ -142,6 +184,57 @@ export default function Home() {
   const updateState = useCallback((s: ConversationState) => {
     stateRef.current = s;
     setState(s);
+  }, []);
+
+  const savePalaceToDB = useCallback(async (stops: string[]) => {
+    try {
+      const locations = stops.map((name, i) => ({
+        locationName: name,
+        position: i + 1,
+      }));
+      await apiRequest("POST", "/api/palaces", { locations });
+    } catch (e) {
+      console.error("Failed to save palace:", e);
+    }
+  }, []);
+
+  const saveSessionToDB = useCallback(async (s: ConversationState) => {
+    try {
+      await apiRequest("POST", "/api/sessions", {
+        date: todayStr(),
+        level: s.itemCount,
+        category: s.category,
+        score: s.correctCount,
+        totalItems: s.itemCount,
+        assignments: s.assignments,
+        placeName: s.placeName,
+        stops: s.stops,
+      });
+    } catch (e) {
+      console.error("Failed to save session:", e);
+    }
+  }, []);
+
+  const saveProgressToDB = useCallback(async (pd: ProgressData) => {
+    try {
+      const res = await apiRequest("POST", "/api/progress", {
+        currentDay: pd.currentDay,
+        currentLevel: pd.currentLevel,
+        currentCategory: pd.currentCategory,
+        dayCount: pd.dayCount,
+      });
+      const saved = await res.json();
+      setProgressData({
+        currentDay: saved.currentDay,
+        currentLevel: saved.currentLevel,
+        currentCategory: saved.currentCategory,
+        dayCount: saved.dayCount,
+        streak: saved.streak,
+        lastLogin: saved.lastLogin,
+      });
+    } catch (e) {
+      console.error("Failed to save progress:", e);
+    }
   }, []);
 
   const advanceBeat = useCallback(
@@ -174,20 +267,34 @@ export default function Home() {
 
       await showTimbukWithTypewriter(text);
 
+      if (beat === "graduation-offer") {
+        const graduated = { ...currentState, graduated: true };
+        updateState(graduated);
+        setShowContinue(true);
+        return;
+      }
+
       if (beat === "final") {
         setIsFinished(true);
-        const progress = loadProgress();
-        if (progress) {
-          const updated = recordSession(progress, {
-            day: currentState.lessonDay?.day || progress.currentDay,
-            score: currentState.correctCount,
-            totalItems: currentState.itemCount,
-            assignments: currentState.assignments,
-            placeName: currentState.placeName,
-            stops: currentState.stops,
-          });
-          saveProgress(updated);
-        }
+        const perfect = currentState.correctCount === currentState.itemCount;
+        const nextLevel = getNextLevel(
+          progressData.currentLevel,
+          currentState.correctCount,
+          currentState.itemCount
+        );
+        const nextDayCount = progressData.dayCount + 1;
+        const nextCategory = shouldSwitchCategory(nextDayCount, progressData.currentCategory as "objects" | "names");
+        const newProgress: ProgressData = {
+          currentDay: progressData.currentDay + 1,
+          currentLevel: nextLevel,
+          currentCategory: nextCategory,
+          dayCount: nextDayCount,
+          streak: progressData.streak,
+          lastLogin: todayStr(),
+        };
+        await saveSessionToDB(currentState);
+        await savePalaceToDB(currentState.stops);
+        await saveProgressToDB(newProgress);
         return;
       }
 
@@ -234,90 +341,111 @@ export default function Home() {
         await advanceBeat(next, nextState);
       }
     },
-    [showTimbukWithTypewriter, addTimbukInstant, scrollToBottom, fetchAssignments, updateState]
+    [showTimbukWithTypewriter, addTimbukInstant, scrollToBottom, fetchAssignments, updateState, saveProgressToDB, saveSessionToDB, savePalaceToDB, progressData]
   );
 
   const advanceBeatRef = useRef(advanceBeat);
   advanceBeatRef.current = advanceBeat;
 
   useEffect(() => {
-    if (initRef.current) return;
+    if (!isAuthenticated || authLoading || initRef.current) return;
     initRef.current = true;
 
-    const progress = loadProgress();
-    if (progress && progress.userName && progress.hasSeenEducation) {
-      const lesson = getLessonDay(progress.currentDay);
+    const init = async () => {
+      try {
+        const [progressRes, latestSessionRes] = await Promise.all([
+          fetch("/api/progress", { credentials: "include" }),
+          fetch("/api/sessions/latest", { credentials: "include" }),
+        ]);
 
-      if (hasCompletedToday(progress)) {
-        setPhase("chat");
+        const pd: ProgressData = await progressRes.json();
+        setProgressData(pd);
+
+        let latestSession: SessionData | null = null;
+        const sessionBody = await latestSessionRes.json();
+        if (sessionBody && sessionBody.date) {
+          latestSession = sessionBody;
+        }
+
+        const educationSeen = localStorage.getItem("memoryamble_education_seen");
+        if (!educationSeen) {
+          setPhase("education");
+          return;
+        }
+
+        const lesson = getLessonConfig(pd.currentLevel, pd.dayCount, pd.currentCategory as "objects" | "names");
         const s = createFreshState();
-        s.userName = progress.userName;
-        s.lessonDay = lesson;
+        s.userName = displayName;
+        s.isReturningUser = pd.dayCount > 0;
+        s.lessonConfig = lesson;
         s.itemCount = lesson.itemCount;
-        s.isReturningUser = true;
-        updateState(s);
-        setIsFinished(true);
-        setTimeout(() => {
-          const id = ++msgIdRef.current;
-          setMessages([{
-            id,
-            sender: "timbuk",
-            text: `Welcome back, ${progress.userName}! You've already completed today's walk. Come back tomorrow for a new challenge!`,
-          }]);
-        }, 200);
-        return;
+        s.category = lesson.category;
+        s.dayCount = pd.dayCount;
+
+        const completedToday = latestSession && latestSession.date === todayStr();
+        if (completedToday) {
+          updateState(s);
+          setPhase("chat");
+          setIsFinished(true);
+          setTimeout(() => {
+            const id = ++msgIdRef.current;
+            setMessages([{
+              id,
+              sender: "timbuk",
+              text: `Welcome back, ${displayName}! You've already completed today's walk. Come back tomorrow for a new challenge!`,
+            }]);
+          }, 200);
+          return;
+        }
+
+        const hasYesterdaySession = latestSession && latestSession.date === yesterdayStr();
+
+        if (hasYesterdaySession && latestSession && pd.dayCount > 0) {
+          s.checkInAssignments = latestSession.assignments;
+          s.checkInPlace = latestSession.placeName;
+
+          updateState(s);
+          setPhase("chat");
+          setTimeout(() => {
+            setCurrentBeat("check-in-intro");
+            advanceBeatRef.current("check-in-intro", s);
+          }, 300);
+        } else {
+          updateState(s);
+          setPhase("chat");
+          setTimeout(() => {
+            advanceBeatRef.current("welcome", s);
+          }, 300);
+        }
+      } catch (e) {
+        console.error("Failed to load progress:", e);
+        setPhase("education");
       }
+    };
 
-      const yesterday = getYesterdaySession(progress);
-      const s = createFreshState();
-      s.userName = progress.userName;
-      s.isReturningUser = true;
-      s.lessonDay = lesson;
-      s.itemCount = lesson.itemCount;
-
-      if (yesterday) {
-        s.checkInAssignments = yesterday.assignments;
-        s.checkInPlace = yesterday.placeName;
-
-        updateState(s);
-        setPhase("chat");
-        setTimeout(() => {
-          setCurrentBeat("check-in-intro");
-          advanceBeatRef.current("check-in-intro", s);
-        }, 300);
-      } else {
-        updateState(s);
-        setPhase("chat");
-        setTimeout(() => {
-          advanceBeatRef.current("welcome", s);
-        }, 300);
-      }
-      return;
-    }
-  }, [updateState]);
+    init();
+  }, [isAuthenticated, authLoading, displayName, updateState]);
 
   const handleEducationComplete = useCallback(() => {
-    setPhase("name");
-  }, []);
+    localStorage.setItem("memoryamble_education_seen", "true");
 
-  const handleNameSubmit = useCallback((name: string) => {
-    const progress = loadProgress();
-    if (progress) {
-      progress.userName = name;
-      progress.hasSeenEducation = true;
-      saveProgress(progress);
-    } else {
-      saveProgress(initProgress(name));
-    }
-
-    const lesson = getLessonDay(1);
-    const s = { ...stateRef.current, userName: name, lessonDay: lesson, itemCount: lesson.itemCount };
+    const lesson = getLessonConfig(
+      progressData.currentLevel,
+      progressData.dayCount,
+      progressData.currentCategory as "objects" | "names"
+    );
+    const s = createFreshState();
+    s.userName = displayName;
+    s.lessonConfig = lesson;
+    s.itemCount = lesson.itemCount;
+    s.category = lesson.category;
+    s.dayCount = progressData.dayCount;
     updateState(s);
     setPhase("chat");
     setTimeout(() => {
       advanceBeatRef.current("welcome", s);
     }, 200);
-  }, [updateState]);
+  }, [displayName, progressData, updateState]);
 
   const handleContinue = useCallback(async () => {
     if (processingRef.current) return;
@@ -446,26 +574,6 @@ export default function Home() {
     [currentBeat, addUserMessage, updateState]
   );
 
-  const handleRestart = () => {
-    clearProgress();
-    setPhase("education");
-    setMessages([]);
-    setCurrentBeat("welcome");
-    setIsTyping(false);
-    setInputEnabled(false);
-    setShowContinue(false);
-    setIsFinished(false);
-    setGenError(false);
-    setShowSparkButton(false);
-    setSparkLoading(false);
-    setTypewriterBusy(false);
-    typewriterResolveRef.current = null;
-    updateState(createFreshState());
-    msgIdRef.current = 0;
-    processingRef.current = false;
-    initRef.current = false;
-  };
-
   const handleNewPalace = () => {
     setMessages([]);
     setCurrentBeat("welcome");
@@ -479,15 +587,18 @@ export default function Home() {
     setTypewriterBusy(false);
     typewriterResolveRef.current = null;
 
-    const progress = loadProgress();
+    const lesson = getLessonConfig(
+      progressData.currentLevel,
+      progressData.dayCount,
+      progressData.currentCategory as "objects" | "names"
+    );
     const s = createFreshState();
-    if (progress) {
-      const lesson = getLessonDay(progress.currentDay);
-      s.userName = progress.userName;
-      s.lessonDay = lesson;
-      s.itemCount = lesson.itemCount;
-      s.isReturningUser = true;
-    }
+    s.userName = displayName;
+    s.lessonConfig = lesson;
+    s.itemCount = lesson.itemCount;
+    s.category = lesson.category;
+    s.dayCount = progressData.dayCount;
+    s.isReturningUser = true;
     updateState(s);
     msgIdRef.current = 0;
     processingRef.current = false;
@@ -497,24 +608,61 @@ export default function Home() {
     }, 200);
   };
 
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-dvh bg-background" data-testid="loading">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mx-auto">
+            <Brain className="w-8 h-8 text-primary-foreground" />
+          </div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LandingPage />;
+  }
+
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : -1;
-  const lesson = state.lessonDay;
-  const dayLabel = lesson ? `Day ${lesson.day}: ${lesson.title}` : "";
+  const lesson = state.lessonConfig;
+  const dayLabel = lesson ? `Day ${state.dayCount + 1}: ${lesson.title}` : "";
+  const lvl = levelLabel(progressData.currentLevel);
+
+  if (phase === "loading") {
+    return (
+      <div className="flex items-center justify-center h-dvh bg-background" data-testid="loading">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mx-auto">
+            <Brain className="w-8 h-8 text-primary-foreground" />
+          </div>
+          <p className="text-muted-foreground">Setting up your palace...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (phase === "education") {
     return (
       <div className="flex flex-col h-dvh bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]" data-testid="app-container">
         <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50 shrink-0">
-          <div className="max-w-3xl mx-auto px-4 md:px-6 py-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
-              <Brain className="w-6 h-6 text-primary-foreground" />
+          <div className="max-w-3xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
+                <Brain className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold tracking-tight" data-testid="text-app-title">
+                  MemoryAmble
+                </h1>
+                <p className="text-sm text-muted-foreground" data-testid="text-username">{displayName}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight" data-testid="text-app-title">
-                MemoryAmble
-              </h1>
-              <p className="text-sm text-muted-foreground">Coach Timbuk</p>
-            </div>
+            <Button variant="ghost" size="sm" onClick={() => logout()} className="gap-2 text-muted-foreground" data-testid="button-signout">
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
           </div>
           <div className="border-t border-border/30">
             <div className="max-w-3xl mx-auto px-4 md:px-6">
@@ -524,34 +672,6 @@ export default function Home() {
         </header>
         <div className="flex-1 overflow-y-auto">
           <EducationSlides onComplete={handleEducationComplete} />
-        </div>
-      </div>
-    );
-  }
-
-  if (phase === "name") {
-    return (
-      <div className="flex flex-col h-dvh bg-background pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]" data-testid="app-container">
-        <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50 shrink-0">
-          <div className="max-w-3xl mx-auto px-4 md:px-6 py-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
-              <Brain className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight" data-testid="text-app-title">
-                MemoryAmble
-              </h1>
-              <p className="text-sm text-muted-foreground">Coach Timbuk</p>
-            </div>
-          </div>
-          <div className="border-t border-border/30">
-            <div className="max-w-3xl mx-auto px-4 md:px-6">
-              <ProgressBar currentStep={0} />
-            </div>
-          </div>
-        </header>
-        <div className="flex-1 overflow-y-auto">
-          <NameEntry onSubmit={handleNameSubmit} />
         </div>
       </div>
     );
@@ -569,32 +689,50 @@ export default function Home() {
               <h1 className="text-lg font-semibold tracking-tight" data-testid="text-app-title">
                 MemoryAmble
               </h1>
-              {dayLabel && (
+              {dayLabel ? (
                 <p className="text-sm font-serif italic text-muted-foreground" data-testid="text-day-label">
                   {dayLabel}
                 </p>
+              ) : (
+                <p className="text-sm text-muted-foreground" data-testid="text-username">{displayName}</p>
               )}
             </div>
           </div>
-          {isFinished && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleRestart}
-              className="gap-2"
-              data-testid="button-restart"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Start Over
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground" data-testid="text-level-info">
+              <span>Level {lvl}</span>
+              <span className="text-border">|</span>
+              <span>{progressData.currentLevel} items</span>
+              {progressData.streak > 1 && (
+                <>
+                  <span className="text-border">|</span>
+                  <Flame className="w-3.5 h-3.5 text-orange-500" />
+                  <span>{progressData.streak}</span>
+                </>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => logout()} className="gap-1 text-muted-foreground" data-testid="button-signout">
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
-          )}
+          </div>
         </div>
         {dayLabel && (
           <div className="bg-primary/5 border-t border-b border-border/30">
-            <div className="max-w-3xl mx-auto px-4 md:px-6 py-2 text-center">
+            <div className="max-w-3xl mx-auto px-4 md:px-6 py-2 flex items-center justify-center gap-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground" data-testid="text-daily-focus">
                 Today's Focus: {lesson?.focus}
               </p>
+              <div className="sm:hidden flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="text-border">|</span>
+                <span>Lvl {lvl}</span>
+                {progressData.streak > 1 && (
+                  <>
+                    <Flame className="w-3 h-3 text-orange-500" />
+                    <span>{progressData.streak}</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -637,18 +775,6 @@ export default function Home() {
                 <ArrowRight className="w-5 h-5" />
                 Build Another Palace
               </Button>
-              <div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRestart}
-                  className="gap-2 text-muted-foreground"
-                  data-testid="button-restart-bottom"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Reset Everything
-                </Button>
-              </div>
             </div>
           ) : genError ? (
             <div className="text-center">
