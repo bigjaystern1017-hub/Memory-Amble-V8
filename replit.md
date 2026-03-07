@@ -15,7 +15,7 @@ A memory training web app for seniors (ages 70+) that uses the Memory Palace tec
 
 - `/` - Public landing page (landing.tsx)
 - `/login` - Supabase auth page with Google + Email/Password (login.tsx)
-- `/amble` - Protected training chat page (amble.tsx)
+- `/amble` - Training chat page (amble.tsx) -- guests can play Day 1 without signing in
 
 ## Level-Based Progression System
 

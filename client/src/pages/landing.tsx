@@ -7,14 +7,6 @@ export default function Landing() {
   const [, navigate] = useLocation();
   const { isAuthenticated, signOut, displayName } = useAuth();
 
-  const handleStartAmble = () => {
-    if (isAuthenticated) {
-      navigate("/amble");
-    } else {
-      navigate("/login");
-    }
-  };
-
   return (
     <div className="min-h-dvh bg-background" data-testid="landing-page">
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
@@ -49,7 +41,6 @@ export default function Landing() {
                 variant="outline"
                 size="sm"
                 onClick={() => navigate("/login")}
-                className="gap-2"
                 data-testid="button-header-signin"
               >
                 Sign In
@@ -84,7 +75,7 @@ export default function Landing() {
 
             <Button
               size="lg"
-              onClick={handleStartAmble}
+              onClick={() => navigate("/amble")}
               className="gap-2 text-lg px-8 py-6"
               data-testid="button-start-amble"
             >
@@ -142,12 +133,12 @@ export default function Landing() {
               Ready to build your first Memory Palace?
             </h3>
             <p className="text-lg text-muted-foreground">
-              It takes just a few minutes. Sign in to save your progress, then
-              let Coach Timbuk guide you through your very first walk.
+              It takes just a few minutes. Try your first walk right now -- no
+              sign-up needed. Coach Timbuk will guide you every step of the way.
             </p>
             <Button
               size="lg"
-              onClick={handleStartAmble}
+              onClick={() => navigate("/amble")}
               className="gap-2 text-lg px-8 py-6"
               data-testid="button-start-amble-bottom"
             >

@@ -28,7 +28,7 @@ import {
 } from "@/lib/progress";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
-import { Brain, ArrowRight, Lightbulb, LogOut, Flame } from "lucide-react";
+import { Brain, ArrowRight, Lightbulb, LogOut, Flame, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Message {
@@ -54,6 +54,8 @@ async function authFetch(path: string, options: RequestInit = {}) {
 export default function Amble() {
   const [, navigate] = useLocation();
   const { isAuthenticated, isLoading: authLoading, signOut, displayName } = useAuth();
+
+  const isGuest = !isAuthenticated;
 
   const [phase, setPhase] = useState<"loading" | "education" | "chat">("loading");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -86,12 +88,6 @@ export default function Amble() {
   stateRef.current = state;
 
   const progressStep = getProgressStep(currentBeat);
-
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      navigate("/login");
-    }
-  }, [authLoading, isAuthenticated, navigate]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -179,6 +175,7 @@ export default function Amble() {
   }, []);
 
   const savePalaceToDB = useCallback(async (stops: string[]) => {
+    if (isGuest) return;
     try {
       const locations = stops.map((name, i) => ({
         locationName: name,
@@ -191,9 +188,10 @@ export default function Amble() {
     } catch (e) {
       console.error("Failed to save palace:", e);
     }
-  }, []);
+  }, [isGuest]);
 
   const saveSessionToDB = useCallback(async (s: ConversationState) => {
+    if (isGuest) return;
     try {
       await authFetch("/api/sessions", {
         method: "POST",
@@ -211,9 +209,10 @@ export default function Amble() {
     } catch (e) {
       console.error("Failed to save session:", e);
     }
-  }, []);
+  }, [isGuest]);
 
   const saveProgressToDB = useCallback(async (pd: ProgressData) => {
+    if (isGuest) return;
     try {
       const res = await authFetch("/api/progress", {
         method: "POST",
@@ -236,7 +235,7 @@ export default function Amble() {
     } catch (e) {
       console.error("Failed to save progress:", e);
     }
-  }, []);
+  }, [isGuest]);
 
   const advanceBeat = useCallback(
     async (beat: BeatId, currentState: ConversationState) => {
@@ -348,8 +347,30 @@ export default function Amble() {
   advanceBeatRef.current = advanceBeat;
 
   useEffect(() => {
-    if (!isAuthenticated || authLoading || initRef.current) return;
+    if (authLoading || initRef.current) return;
     initRef.current = true;
+
+    if (isGuest) {
+      const educationSeen = localStorage.getItem("memoryamble_education_seen");
+      if (!educationSeen) {
+        setPhase("education");
+        return;
+      }
+
+      const lesson = getLessonConfig(3, 0, "objects");
+      const s = createFreshState();
+      s.userName = "friend";
+      s.lessonConfig = lesson;
+      s.itemCount = lesson.itemCount;
+      s.category = lesson.category;
+      s.dayCount = 0;
+      updateState(s);
+      setPhase("chat");
+      setTimeout(() => {
+        advanceBeatRef.current("welcome", s);
+      }, 300);
+      return;
+    }
 
     const init = async () => {
       try {
@@ -424,7 +445,7 @@ export default function Amble() {
     };
 
     init();
-  }, [isAuthenticated, authLoading, displayName, updateState]);
+  }, [authLoading, isGuest, displayName, updateState]);
 
   const handleEducationComplete = useCallback(() => {
     localStorage.setItem("memoryamble_education_seen", "true");
@@ -435,7 +456,7 @@ export default function Amble() {
       progressData.currentCategory as "objects" | "names"
     );
     const s = createFreshState();
-    s.userName = displayName;
+    s.userName = isGuest ? "friend" : displayName;
     s.lessonConfig = lesson;
     s.itemCount = lesson.itemCount;
     s.category = lesson.category;
@@ -445,7 +466,7 @@ export default function Amble() {
     setTimeout(() => {
       advanceBeatRef.current("welcome", s);
     }, 200);
-  }, [displayName, progressData, updateState]);
+  }, [displayName, isGuest, progressData, updateState]);
 
   const handleContinue = useCallback(async () => {
     if (processingRef.current) return;
@@ -579,6 +600,11 @@ export default function Amble() {
   );
 
   const handleNewPalace = () => {
+    if (isGuest) {
+      navigate("/login");
+      return;
+    }
+
     setMessages([]);
     setCurrentBeat("welcome");
     setIsTyping(false);
@@ -625,8 +651,6 @@ export default function Amble() {
     );
   }
 
-  if (!isAuthenticated) return null;
-
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : -1;
   const lesson = state.lessonConfig;
   const dayLabel = lesson ? `Day ${state.dayCount + 1}: ${lesson.title}` : "";
@@ -654,17 +678,20 @@ export default function Amble() {
               <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center">
                 <Brain className="w-6 h-6 text-primary-foreground" />
               </div>
-              <div>
-                <h1 className="text-lg font-semibold tracking-tight" data-testid="text-app-title">
-                  MemoryAmble
-                </h1>
-                <p className="text-sm text-muted-foreground" data-testid="text-username">{displayName}</p>
-              </div>
+              <h1 className="text-lg font-semibold tracking-tight" data-testid="text-app-title">
+                MemoryAmble
+              </h1>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => signOut()} className="gap-2 text-muted-foreground" data-testid="button-signout">
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </Button>
+            {isGuest ? (
+              <Button variant="outline" size="sm" onClick={() => navigate("/login")} data-testid="button-header-signin">
+                Sign In
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => signOut()} className="gap-2 text-muted-foreground" data-testid="button-signout">
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
+            )}
           </div>
           <div className="border-t border-border/30">
             <div className="max-w-3xl mx-auto px-4 md:px-6">
@@ -695,31 +722,39 @@ export default function Amble() {
                 <p className="text-sm font-serif italic text-muted-foreground" data-testid="text-day-label">
                   {dayLabel}
                 </p>
-              ) : (
+              ) : isGuest ? null : (
                 <p className="text-sm text-muted-foreground" data-testid="text-username">{displayName}</p>
               )}
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground" data-testid="text-level-info">
-              <span>Level {lvl}</span>
-              <span className="text-border">|</span>
-              <span>{progressData.currentLevel} items</span>
-              {progressData.streak > 1 && (
-                <>
-                  <span className="text-border">|</span>
-                  <Flame className="w-3.5 h-3.5 text-orange-500" />
-                  <span>{progressData.streak}</span>
-                </>
-              )}
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => signOut()} className="gap-1 text-muted-foreground" data-testid="button-signout">
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </Button>
+            {!isGuest && (
+              <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground" data-testid="text-level-info">
+                <span>Level {lvl}</span>
+                <span className="text-border">|</span>
+                <span>{progressData.currentLevel} items</span>
+                {progressData.streak > 1 && (
+                  <>
+                    <span className="text-border">|</span>
+                    <Flame className="w-3.5 h-3.5 text-orange-500" />
+                    <span>{progressData.streak}</span>
+                  </>
+                )}
+              </div>
+            )}
+            {isGuest ? (
+              <Button variant="outline" size="sm" onClick={() => navigate("/login")} data-testid="button-header-signin">
+                Sign In
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => signOut()} className="gap-1 text-muted-foreground" data-testid="button-signout">
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </Button>
+            )}
           </div>
         </div>
-        {dayLabel && (
+        {dayLabel && !isGuest && (
           <div className="bg-primary/5 border-t border-b border-border/30">
             <div className="max-w-3xl mx-auto px-4 md:px-6 py-2 flex items-center justify-center gap-4">
               <p className="text-xs uppercase tracking-widest text-muted-foreground" data-testid="text-daily-focus">
@@ -767,16 +802,43 @@ export default function Amble() {
       <div className="border-t border-border/50 bg-background/80 backdrop-blur-sm shrink-0">
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-4">
           {isFinished ? (
-            <div className="text-center space-y-2">
-              <Button
-                size="lg"
-                onClick={handleNewPalace}
-                className="gap-2"
-                data-testid="button-new-palace"
-              >
-                <ArrowRight className="w-5 h-5" />
-                Build Another Palace
-              </Button>
+            <div className="text-center space-y-3">
+              {isGuest ? (
+                <>
+                  <p className="text-muted-foreground">
+                    Great first walk! Create an account to save your progress and continue tomorrow.
+                  </p>
+                  <div className="flex items-center justify-center gap-3">
+                    <Button
+                      size="lg"
+                      onClick={() => navigate("/login")}
+                      className="gap-2"
+                      data-testid="button-signup-prompt"
+                    >
+                      <LogIn className="w-5 h-5" />
+                      Create Account
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={() => navigate("/")}
+                      data-testid="button-back-home"
+                    >
+                      Back Home
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Button
+                  size="lg"
+                  onClick={handleNewPalace}
+                  className="gap-2"
+                  data-testid="button-new-palace"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  Build Another Palace
+                </Button>
+              )}
             </div>
           ) : genError ? (
             <div className="text-center">
