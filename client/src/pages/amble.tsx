@@ -968,13 +968,45 @@ export default function Amble() {
           )}
         </div>
       </div>
-      <button
-        onClick={() => { localStorage.clear(); window.location.reload(); }}
-        className="fixed bottom-2 right-2 z-[9999] px-2 py-1 text-xs text-muted-foreground/50 hover:text-muted-foreground bg-transparent cursor-pointer"
-        data-testid="button-dev-reset"
-      >
-        Dev Reset
-      </button>
+      <div className="fixed bottom-2 right-2 z-[9999] flex flex-col gap-1">
+        <button
+          onClick={() => { localStorage.clear(); window.location.reload(); }}
+          className="px-2 py-1 text-xs text-muted-foreground/50 hover:text-muted-foreground bg-transparent cursor-pointer"
+          data-testid="button-dev-reset"
+        >
+          Dev Reset
+        </button>
+        <button
+          onClick={async () => {
+            if (isGuest) {
+              localStorage.setItem("memoryamble_current_day", "2");
+              window.location.reload();
+            } else {
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+                if (token) {
+                  await fetch("/api/user/current-day", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ currentDay: 2 }),
+                  });
+                  window.location.reload();
+                }
+              } catch (e) {
+                console.error("Failed to skip to day 2:", e);
+              }
+            }
+          }}
+          className="px-2 py-1 text-xs text-muted-foreground/50 hover:text-muted-foreground bg-transparent cursor-pointer"
+          data-testid="button-dev-skip-day2"
+        >
+          Dev: Skip to Day 2
+        </button>
+      </div>
     </div>
   );
 }

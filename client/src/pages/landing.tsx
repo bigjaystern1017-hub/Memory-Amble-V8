@@ -1,14 +1,41 @@
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Brain, ArrowRight, LogOut, Landmark, Lightbulb, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 export default function Landing() {
   const [, navigate] = useLocation();
   const { isAuthenticated, signOut, displayName } = useAuth();
-  
-  const saved = localStorage.getItem("memoryamble_current_day");
-  const currentDay = saved ? parseInt(saved, 10) : 1;
+  const [currentDay, setCurrentDay] = useState(1);
+
+  useEffect(() => {
+    const loadDay = async () => {
+      if (isAuthenticated) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const token = session?.access_token;
+          if (token) {
+            const res = await fetch("/api/user/progress", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              const progress = await res.json();
+              setCurrentDay(progress.currentDay || 1);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to load progress:", e);
+          setCurrentDay(1);
+        }
+      } else {
+        const saved = localStorage.getItem("memoryamble_current_day");
+        setCurrentDay(saved ? parseInt(saved, 10) : 1);
+      }
+    };
+    loadDay();
+  }, [isAuthenticated]);
 
   return (
     <div className="min-h-dvh bg-background" data-testid="landing-page">
