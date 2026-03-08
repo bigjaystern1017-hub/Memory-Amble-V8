@@ -180,11 +180,11 @@ export default function Amble() {
 
   const savePalaceToDB = useCallback(async (stops: string[]) => {
     if (isGuest) {
-      localStorage.setItem("memoryamble_palace_stops", JSON.stringify(stops));
+      localStorage.setItem("memory-amble-palace", JSON.stringify(stops));
       return;
     }
     try {
-      localStorage.setItem("memoryamble_palace_stops", JSON.stringify(stops));
+      localStorage.setItem("memory-amble-palace", JSON.stringify(stops));
       const locations = stops.map((name, i) => ({
         locationName: name,
         position: i + 1,
@@ -199,7 +199,7 @@ export default function Amble() {
   }, [isGuest]);
 
   const loadSavedPalace = useCallback(async (): Promise<string[] | null> => {
-    const saved = localStorage.getItem("memoryamble_palace_stops");
+    const saved = localStorage.getItem("memory-amble-palace");
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -338,7 +338,7 @@ export default function Amble() {
         }, 500);
         
         if (isGuest) {
-          localStorage.setItem("memoryamble_current_day", String(newProgress.currentDay));
+          localStorage.setItem("memory-amble-day", String(newProgress.currentDay));
         } else {
           await authFetch("/api/user/current-day", {
             method: "POST",
@@ -1018,8 +1018,8 @@ export default function Amble() {
         <button
           onClick={async () => {
             const dummyPalace = ["Front Door", "Hallway", "Kitchen"];
-            localStorage.setItem("memoryamble_palace_stops", JSON.stringify(dummyPalace));
-            localStorage.setItem("memoryamble_current_day", "2");
+            localStorage.setItem("memory-amble-palace", JSON.stringify(dummyPalace));
+            localStorage.setItem("memory-amble-day", "2");
             if (!isGuest) {
               try {
                 const { data: { session } } = await supabase.auth.getSession();
@@ -1048,7 +1048,7 @@ export default function Amble() {
                 console.error("Failed to skip to day 2:", e);
               }
             }
-            window.location.reload();
+            window.location.href = window.location.pathname;
           }}
           className="px-2 py-1 text-xs text-muted-foreground/50 hover:text-muted-foreground bg-transparent cursor-pointer"
           data-testid="button-dev-skip-day2"

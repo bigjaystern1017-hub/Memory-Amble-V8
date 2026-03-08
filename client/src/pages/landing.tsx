@@ -12,6 +12,11 @@ export default function Landing() {
 
   useEffect(() => {
     const loadDay = async () => {
+      const localSaved = localStorage.getItem("memory-amble-day");
+      if (localSaved) {
+        setCurrentDay(parseInt(localSaved, 10));
+        return;
+      }
       if (isAuthenticated) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
@@ -30,12 +35,12 @@ export default function Landing() {
           setCurrentDay(1);
         }
       } else {
-        const saved = localStorage.getItem("memoryamble_current_day");
-        setCurrentDay(saved ? parseInt(saved, 10) : 1);
+        setCurrentDay(1);
       }
     };
     loadDay();
   }, [isAuthenticated]);
+
 
   return (
     <div className="min-h-dvh bg-background" data-testid="landing-page">

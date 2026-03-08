@@ -141,13 +141,28 @@ function ordinal(n: number): string {
 }
 
 function extractKeyword(objectName: string): string {
-  return objectName
+  const cleaned = objectName
+    .toLowerCase()
+    .trim()
     .replace(/^a\s+/i, "")
     .replace(/^an\s+/i, "")
     .replace(/^the\s+/i, "")
-    .split(" ")
-    .pop()
-    ?.toLowerCase() || "";
+    .replace(/\s+/g, "");
+  return cleaned;
+}
+
+function fuzzyMatch(userAnswer: string, correctObject: string): boolean {
+  const cleanAnswer = userAnswer
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/[^\w]/g, "");
+  const cleanCorrect = correctObject
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/[^\w]/g, "");
+  return cleanAnswer.includes(cleanCorrect) || cleanCorrect.includes(cleanAnswer);
 }
 
 function itemLabel(category: "objects" | "names"): string {
@@ -193,8 +208,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       const a = state.checkInAssignments[idx];
       const answer = state.checkInAnswers[idx] || "";
       if (!a) return "";
-      const keyword = extractKeyword(a.object);
-      const isCorrect = answer.toLowerCase().includes(keyword);
+      const isCorrect = fuzzyMatch(answer, a.object);
       const isLast = idx === state.checkInAssignments.length - 1;
 
       if (isCorrect && isLast) {
@@ -376,8 +390,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       const a = state.assignments[ri];
       const answer = state.userAnswers[idx] || "";
       if (!a) return "";
-      const keyword = extractKeyword(a.object);
-      const isCorrect = answer.toLowerCase().includes(keyword);
+      const isCorrect = fuzzyMatch(answer, a.object);
       const isLast = idx === total - 1;
 
       if (isCorrect && isLast) {
