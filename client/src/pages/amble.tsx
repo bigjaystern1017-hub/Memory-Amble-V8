@@ -86,10 +86,6 @@ export default function Amble() {
   const [typewriterBusy, setTypewriterBusy] = useState(false);
   const [fastForward, setFastForward] = useState(false);
   const [state, setState] = useState<ConversationState>(createFreshState());
-  
-  const queuedInputRef = useRef<{ text: string; beat: BeatId } | null>(null);
-  const fastForwardTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const processUserInputRef = useRef<(text: string) => Promise<void>>();
   const [resultsSummary, setResultsSummary] = useState({ correctCount: 0, totalItems: 0, streak: 0 });
 
   const [progressData, setProgressData] = useState<ProgressData>({
@@ -156,26 +152,13 @@ export default function Amble() {
 
   const handleTypewriterDone = useCallback(() => {
     setTypewriterBusy(false);
+    setFastForward(false);
     if (typewriterResolveRef.current) {
       const resolve = typewriterResolveRef.current;
       typewriterResolveRef.current = null;
       resolve();
     }
-    
-    // If there's a queued input or fast-forward, process it after 1 second
-    if (queuedInputRef.current || fastForward) {
-      fastForwardTimeoutRef.current = setTimeout(async () => {
-        setFastForward(false);
-        if (queuedInputRef.current && processUserInputRef.current) {
-          processingRef.current = true;
-          const { text } = queuedInputRef.current;
-          queuedInputRef.current = null;
-          await processUserInputRef.current(text);
-          processingRef.current = false;
-        }
-      }, 1000);
-    }
-  }, [fastForward]);
+  }, []);
 
   const addTimbukInstant = useCallback(
     (text: string) => {
@@ -727,30 +710,21 @@ export default function Amble() {
     [currentBeat, updateState]
   );
   
+  const processUserInputRef = useRef<(text: string) => Promise<void>>();
   processUserInputRef.current = processUserInput;
 
   const handleUserInput = useCallback(
     async (text: string) => {
       if (processingRef.current) return;
+      processingRef.current = true;
       
       addUserMessage(text);
       setShowSparkButton(false);
       
-      // If typewriter is busy, fast-forward and queue the input
-      if (typewriterBusy) {
-        queuedInputRef.current = { text, beat: currentBeat };
-        setFastForward(true);
-        return;
-      }
-      
-      // Otherwise, process immediately
-      if (processUserInputRef.current) {
-        processingRef.current = true;
-        await processUserInputRef.current(text);
-        processingRef.current = false;
-      }
+      await processUserInputRef.current?.(text);
+      processingRef.current = false;
     },
-    [typewriterBusy, currentBeat, addUserMessage]
+    [addUserMessage]
   );
 
   const handleFinish = useCallback(async () => {
@@ -1011,6 +985,7 @@ export default function Amble() {
               typewriter={msg.typewriter && msg.id === lastMessageId}
               onTypewriterDone={msg.id === lastMessageId ? handleTypewriterDone : undefined}
               fastForward={msg.id === lastMessageId && fastForward}
+              onSkipTyping={msg.id === lastMessageId && typewriterBusy ? () => setFastForward(true) : undefined}
             />
           ))}
           {isTyping && <ChatMessage sender="timbuk" text="" isTyping />}

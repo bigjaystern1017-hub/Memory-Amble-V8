@@ -11,6 +11,7 @@ interface ChatMessageProps {
   typewriter?: boolean;
   onTypewriterDone?: () => void;
   fastForward?: boolean;
+  onSkipTyping?: () => void;
 }
 
 function TypewriterText({ text, onDone, fastForward }: { text: string; onDone?: () => void; fastForward?: boolean }) {
@@ -64,7 +65,7 @@ function TypewriterText({ text, onDone, fastForward }: { text: string; onDone?: 
   );
 }
 
-export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDone, fastForward }: ChatMessageProps) {
+export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDone, fastForward, onSkipTyping }: ChatMessageProps) {
   const isTimbuk = sender === "timbuk";
 
   return (
@@ -82,7 +83,7 @@ export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDo
       )}
 
       <div
-        className={`max-w-[85%] md:max-w-[75%] rounded-md px-5 py-4 ${
+        className={`max-w-[85%] md:max-w-[75%] rounded-md px-5 py-4 flex flex-col gap-2 ${
           isTimbuk
             ? "bg-card border border-border text-card-foreground"
             : "bg-primary text-primary-foreground"
@@ -107,7 +108,18 @@ export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDo
             />
           </div>
         ) : typewriter ? (
-          <TypewriterText text={text} onDone={onTypewriterDone} fastForward={fastForward} />
+          <div className="flex gap-2 items-start">
+            <TypewriterText text={text} onDone={onTypewriterDone} fastForward={fastForward} />
+            {onSkipTyping && (
+              <button
+                onClick={onSkipTyping}
+                className="text-xs font-medium underline text-muted-foreground hover:text-foreground whitespace-nowrap pt-0.5"
+                data-testid="button-skip-typing"
+              >
+                Skip
+              </button>
+            )}
+          </div>
         ) : (
           <p className="text-xl md:text-2xl leading-relaxed whitespace-pre-wrap">{text}</p>
         )}
