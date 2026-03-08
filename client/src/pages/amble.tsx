@@ -89,6 +89,7 @@ export default function Amble() {
   
   const queuedInputRef = useRef<{ text: string; beat: BeatId } | null>(null);
   const fastForwardTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const processUserInputRef = useRef<(text: string) => Promise<void>>();
   const [resultsSummary, setResultsSummary] = useState({ correctCount: 0, totalItems: 0, streak: 0 });
 
   const [progressData, setProgressData] = useState<ProgressData>({
@@ -165,16 +166,16 @@ export default function Amble() {
     if (queuedInputRef.current || fastForward) {
       fastForwardTimeoutRef.current = setTimeout(async () => {
         setFastForward(false);
-        if (queuedInputRef.current) {
+        if (queuedInputRef.current && processUserInputRef.current) {
           processingRef.current = true;
           const { text } = queuedInputRef.current;
           queuedInputRef.current = null;
-          await processUserInput(text);
+          await processUserInputRef.current(text);
           processingRef.current = false;
         }
       }, 1000);
     }
-  }, [processUserInput]);
+  }, [fastForward]);
 
   const addTimbukInstant = useCallback(
     (text: string) => {
@@ -725,6 +726,8 @@ export default function Amble() {
     },
     [currentBeat, updateState]
   );
+  
+  processUserInputRef.current = processUserInput;
 
   const handleUserInput = useCallback(
     async (text: string) => {
@@ -741,11 +744,13 @@ export default function Amble() {
       }
       
       // Otherwise, process immediately
-      processingRef.current = true;
-      await processUserInput(text);
-      processingRef.current = false;
+      if (processUserInputRef.current) {
+        processingRef.current = true;
+        await processUserInputRef.current(text);
+        processingRef.current = false;
+      }
     },
-    [typewriterBusy, currentBeat, addUserMessage, processUserInput]
+    [typewriterBusy, currentBeat, addUserMessage]
   );
 
   const handleNewPalace = () => {
