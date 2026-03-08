@@ -59,17 +59,32 @@ export default function Amble() {
 
   const isGuest = !isAuthenticated;
 
+  const fuzzyMatch = (userAnswer: string, correctObject: string): boolean => {
+    const cleanAnswer = userAnswer
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "")
+      .replace(/[^\w]/g, "");
+    const cleanCorrect = correctObject
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "")
+      .replace(/[^\w]/g, "");
+    return cleanAnswer.includes(cleanCorrect) || cleanCorrect.includes(cleanAnswer);
+  };
+
   const [phase, setPhase] = useState<"loading" | "education" | "name" | "chat" | "results">("loading");
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentBeat, setCurrentBeat] = useState<BeatId>("welcome");
   const [isTyping, setIsTyping] = useState(false);
-  const [inputEnabled, setInputEnabled] = useState(false);
+  const [inputEnabled, setInputEnabled] = useState(true);
   const [showContinue, setShowContinue] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [genError, setGenError] = useState(false);
   const [showSparkButton, setShowSparkButton] = useState(false);
   const [sparkLoading, setSparkLoading] = useState(false);
   const [typewriterBusy, setTypewriterBusy] = useState(false);
+  const [interruptTypewriter, setInterruptTypewriter] = useState(false);
   const [state, setState] = useState<ConversationState>(createFreshState());
   const [resultsSummary, setResultsSummary] = useState({ correctCount: 0, totalItems: 0, streak: 0 });
 
@@ -629,9 +644,13 @@ export default function Amble() {
     async (text: string) => {
       if (processingRef.current) return;
       processingRef.current = true;
-      setInputEnabled(false);
       setShowSparkButton(false);
       addUserMessage(text);
+
+      if (typewriterBusy) {
+        setInterruptTypewriter(true);
+        setTypewriterBusy(false);
+      }
 
       let s = { ...stateRef.current };
       const beat = currentBeat;
@@ -649,7 +668,7 @@ export default function Amble() {
               .replace(/^an\s+/i, "")
               .replace(/^the\s+/i, "")
               .split(" ").pop()?.toLowerCase() || "";
-            if (text.toLowerCase().includes(keyword)) addCorrect = 1;
+            if (fuzzyMatch(text, keyword)) addCorrect = 1;
           }
           s = { ...s, checkInAnswers: newAnswers, checkInCorrectCount: s.checkInCorrectCount + addCorrect };
           break;
@@ -682,7 +701,7 @@ export default function Amble() {
               .replace(/^an\s+/i, "")
               .replace(/^the\s+/i, "")
               .split(" ").pop()?.toLowerCase() || "";
-            if (text.toLowerCase().includes(keyword)) addCorrect = 1;
+            if (fuzzyMatch(text, keyword)) addCorrect = 1;
           }
           s = { ...s, userAnswers: newAnswers, correctCount: s.correctCount + addCorrect };
           break;
@@ -690,6 +709,7 @@ export default function Amble() {
       }
 
       updateState(s);
+      setInterruptTypewriter(false);
 
       const next = getNextBeat(beat, s);
       if (next) {
@@ -938,6 +958,7 @@ export default function Amble() {
               text={msg.text}
               typewriter={msg.typewriter && msg.id === lastMessageId}
               onTypewriterDone={msg.id === lastMessageId ? handleTypewriterDone : undefined}
+              interruptSignal={msg.id === lastMessageId && interruptTypewriter}
             />
           ))}
           {isTyping && <ChatMessage sender="timbuk" text="" isTyping />}

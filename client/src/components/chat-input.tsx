@@ -23,10 +23,10 @@ export function ChatInput({ onSend, placeholder = "Type your answer...", disable
   }, []);
 
   useEffect(() => {
-    if (autoFocus && inputRef.current && !disabled) {
+    if (autoFocus && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [autoFocus, disabled, placeholder]);
+  }, [autoFocus, placeholder]);
 
   const startListening = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -67,8 +67,7 @@ export function ChatInput({ onSend, placeholder = "Type your answer...", disable
 
   const handleSubmit = () => {
     const trimmed = value.trim();
-    if (!trimmed || disabled) return;
-    if (trimmed.length < 1) return;
+    if (!trimmed) return;
     onSend(trimmed);
     setValue("");
   };
@@ -88,7 +87,6 @@ export function ChatInput({ onSend, placeholder = "Type your answer...", disable
           className="h-14 w-14"
           variant={isListening ? "default" : "secondary"}
           onClick={isListening ? stopListening : startListening}
-          disabled={disabled}
           data-testid="button-microphone"
           aria-label={isListening ? "Stop listening" : "Start voice input"}
         >
@@ -106,7 +104,6 @@ export function ChatInput({ onSend, placeholder = "Type your answer...", disable
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={isListening ? "Listening..." : placeholder}
-        disabled={disabled}
         className="text-xl h-14 flex-1"
         data-testid="input-chat"
       />
@@ -115,7 +112,7 @@ export function ChatInput({ onSend, placeholder = "Type your answer...", disable
         size="icon"
         className="h-14 w-14"
         onClick={handleSubmit}
-        disabled={!value.trim() || disabled}
+        disabled={!value.trim()}
         data-testid="button-send"
         aria-label="Send message"
       >

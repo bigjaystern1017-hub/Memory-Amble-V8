@@ -10,14 +10,22 @@ interface ChatMessageProps {
   isTyping?: boolean;
   typewriter?: boolean;
   onTypewriterDone?: () => void;
+  interruptSignal?: boolean;
 }
 
-function TypewriterText({ text, onDone }: { text: string; onDone?: () => void }) {
+function TypewriterText({ text, onDone, interruptSignal }: { text: string; onDone?: () => void; interruptSignal?: boolean }) {
   const [charIndex, setCharIndex] = useState(0);
   const doneRef = useRef(false);
   const containerRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
+    if (interruptSignal && !doneRef.current) {
+      doneRef.current = true;
+      setCharIndex(text.length);
+      onDone?.();
+      return;
+    }
+
     if (charIndex >= text.length) {
       if (!doneRef.current) {
         doneRef.current = true;
@@ -31,16 +39,20 @@ function TypewriterText({ text, onDone }: { text: string; onDone?: () => void })
     }, CHAR_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [charIndex, text.length, onDone]);
+  }, [charIndex, text.length, onDone, interruptSignal, text]);
 
   useEffect(() => {
-    if (containerRef.current) {
-      const el = containerRef.current.closest("[data-testid='chat-scroll']");
-      if (el) {
-        el.scrollTop = el.scrollHeight;
+    if (interruptSignal || charIndex % 5 === 0) {
+      if (containerRef.current) {
+        const el = containerRef.current.closest("[data-testid='chat-scroll']");
+        if (el) {
+          requestAnimationFrame(() => {
+            el.scrollTop = el.scrollHeight;
+          });
+        }
       }
     }
-  }, [charIndex]);
+  }, [charIndex, interruptSignal]);
 
   return (
     <p ref={containerRef} className="text-xl md:text-2xl leading-relaxed whitespace-pre-wrap">
@@ -52,7 +64,7 @@ function TypewriterText({ text, onDone }: { text: string; onDone?: () => void })
   );
 }
 
-export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDone }: ChatMessageProps) {
+export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDone, interruptSignal }: ChatMessageProps) {
   const isTimbuk = sender === "timbuk";
 
   return (
@@ -95,7 +107,7 @@ export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDo
             />
           </div>
         ) : typewriter ? (
-          <TypewriterText text={text} onDone={onTypewriterDone} />
+          <TypewriterText text={text} onDone={onTypewriterDone} interruptSignal={interruptSignal} />
         ) : (
           <p className="text-xl md:text-2xl leading-relaxed whitespace-pre-wrap">{text}</p>
         )}
