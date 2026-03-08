@@ -1,7 +1,15 @@
-import { BookOpen, MapPin, Sparkles, Eye, Trophy } from "lucide-react";
+import { BookOpen, MapPin, Sparkles, Eye, Trophy, Wind } from "lucide-react";
 
-const steps = [
+const defaultSteps = [
   { label: "Learn", icon: BookOpen },
+  { label: "Your Palace", icon: MapPin },
+  { label: "Remember", icon: Sparkles },
+  { label: "Recall", icon: Eye },
+  { label: "Results", icon: Trophy },
+];
+
+const cleaningSteps = [
+  { label: "Cleaning", icon: Wind },
   { label: "Your Palace", icon: MapPin },
   { label: "Remember", icon: Sparkles },
   { label: "Recall", icon: Eye },
@@ -10,9 +18,11 @@ const steps = [
 
 interface ProgressBarProps {
   currentStep: number;
+  isCleaning?: boolean;
 }
 
-export function ProgressBar({ currentStep }: ProgressBarProps) {
+export function ProgressBar({ currentStep, isCleaning }: ProgressBarProps) {
+  const steps = isCleaning ? cleaningSteps : defaultSteps;
   return (
     <div className="flex items-center justify-center gap-1 md:gap-2 py-3" data-testid="progress-bar">
       {steps.map((step, i) => {

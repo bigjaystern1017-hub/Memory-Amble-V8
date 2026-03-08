@@ -89,6 +89,7 @@ export default function Amble() {
   stateRef.current = state;
 
   const progressStep = getProgressStep(currentBeat);
+  const isCleaning = ["cleaning-intro", "cleaning-recall", "react-cleaning"].includes(currentBeat);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -446,10 +447,16 @@ export default function Amble() {
             advanceBeatRef.current("check-in-intro", s);
           }, 300);
         } else {
+          if (lesson.cleaning && latestSession && pd.dayCount > 0) {
+            s.lastPalaceName = latestSession.placeName;
+            s.lastStops = latestSession.stops;
+          }
+
           updateState(s);
           setPhase("chat");
           setTimeout(() => {
-            advanceBeatRef.current("welcome", s);
+            const startBeat = lesson.cleaning && latestSession && pd.dayCount > 0 ? "cleaning-intro" : "welcome";
+            advanceBeatRef.current(startBeat, s);
           }, 300);
         }
       } catch (e) {
@@ -712,7 +719,7 @@ export default function Amble() {
           </div>
           <div className="border-t border-border/30">
             <div className="max-w-3xl mx-auto px-4 md:px-6">
-              <ProgressBar currentStep={0} />
+              <ProgressBar currentStep={0} isCleaning={false} />
             </div>
           </div>
         </header>
@@ -824,7 +831,7 @@ export default function Amble() {
         )}
         <div className="border-t border-border/30">
           <div className="max-w-3xl mx-auto px-4 md:px-6">
-            <ProgressBar currentStep={progressStep} />
+            <ProgressBar currentStep={progressStep} isCleaning={isCleaning} />
           </div>
         </div>
       </header>

@@ -6,6 +6,9 @@ export type BeatId =
   | "check-in-recall"
   | "react-check-in"
   | "check-in-done"
+  | "cleaning-intro"
+  | "cleaning-recall"
+  | "react-cleaning"
   | "welcome"
   | "ask-place"
   | "react-place"
@@ -41,6 +44,9 @@ export interface ConversationState {
   lessonConfig: LessonConfig | null;
   dayCount: number;
   graduated: boolean;
+  lastPalaceName: string;
+  lastStops: string[];
+  cleaningAnswers: string[];
 }
 
 export function isReverseRecall(state: ConversationState): boolean {
@@ -74,6 +80,9 @@ export function createFreshState(): ConversationState {
     lessonConfig: null,
     dayCount: 0,
     graduated: false,
+    lastPalaceName: "",
+    lastStops: [],
+    cleaningAnswers: [],
   };
 }
 
@@ -100,12 +109,14 @@ function asStop(raw: string): string {
 
 export function getProgressStep(beatId: BeatId): number {
   const checkInBeats: BeatId[] = ["check-in-intro", "check-in-recall", "react-check-in", "check-in-done"];
+  const cleaningBeats: BeatId[] = ["cleaning-intro", "cleaning-recall", "react-cleaning"];
   const palaceBeats: BeatId[] = ["ask-place", "react-place", "ask-stop", "react-stop", "assigning"];
   const rememberBeats: BeatId[] = ["placement-intro", "place-object", "mirror-object"];
   const recallBeats: BeatId[] = ["walkthrough-intro", "recall", "react-recall"];
 
   if (beatId === "welcome") return 0;
   if (checkInBeats.includes(beatId)) return 0;
+  if (cleaningBeats.includes(beatId)) return 0;
   if (palaceBeats.includes(beatId)) return 1;
   if (rememberBeats.includes(beatId)) return 2;
   if (recallBeats.includes(beatId)) return 3;
@@ -208,6 +219,36 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
         return `${correct} out of ${ciTotal}! That's great, ${name}. Those pictures are sticking. Ready for today's lesson?`;
       }
       return `${correct} out of ${ciTotal}. The palace is still there, ${name} -- it just needs a bit more practice. Let's build some new memories today.`;
+    }
+
+    case "cleaning-intro": {
+      const lastPlace = asPlace(state.lastPalaceName);
+      const lastRoute = state.lastStops.map((s, i) => `${ordinal(i + 1)}, ${asStop(s)}`).join(".\n");
+      return `${name}, before we build anything new, let's clear out the palace from last time. You remember ${lastPlace.toLowerCase()}? Here's the route you walked:\n\n${lastRoute}.\n\nI'll guide you through each one, and you picture the breeze clearing it clean.`;
+    }
+
+    case "cleaning-recall": {
+      const idx = state.stepIndex;
+      const stop = asStop(state.lastStops[idx] || "");
+      if (idx === 0) {
+        return `You're at ${stop}. Close your eyes. Imagine a gentle breeze blowing away everything you planted there. What do you see happening?`;
+      }
+      if (idx === state.lastStops.length - 1) {
+        return `Last one. You're at ${stop}. Let the breeze clear it completely. What's left?`;
+      }
+      return `${stop}. The breeze passes through. Tell me what fades away.`;
+    }
+
+    case "react-cleaning": {
+      const idx = state.stepIndex;
+      const isLast = idx === state.lastStops.length - 1;
+      if (idx === 0) {
+        return `Good, ${name}. That one's cleared. Moving on...`;
+      }
+      if (isLast) {
+        return `Perfect. The palace is clean now, ${name}. Ready for something new.`;
+      }
+      return `${name}, that's cleared. Next...`;
     }
 
     case "welcome":
@@ -400,6 +441,16 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
     case "check-in-done":
       return "welcome";
 
+    case "cleaning-intro":
+      return "cleaning-recall";
+
+    case "cleaning-recall":
+      return "react-cleaning";
+
+    case "react-cleaning":
+      if (idx < state.lastStops.length - 1) return "cleaning-recall";
+      return "welcome";
+
     case "welcome":
       return "ask-place";
 
@@ -463,11 +514,12 @@ export function beatNeedsUserInput(beatId: BeatId): boolean {
     "place-object",
     "recall",
     "check-in-recall",
+    "cleaning-recall",
   ].includes(beatId);
 }
 
 export function beatNeedsContinueButton(beatId: BeatId): boolean {
-  return beatId === "welcome" || beatId === "palace-wipe" || beatId === "check-in-done" || beatId === "graduation-offer";
+  return beatId === "welcome" || beatId === "palace-wipe" || beatId === "check-in-done" || beatId === "cleaning-intro" || beatId === "graduation-offer";
 }
 
 export function getInputPlaceholder(beatId: BeatId, state: ConversationState): string {
@@ -483,6 +535,8 @@ export function getInputPlaceholder(beatId: BeatId, state: ConversationState): s
       return isNames ? "Who did you meet here?" : "What do you see at this stop?";
     case "check-in-recall":
       return "What was at this stop?";
+    case "cleaning-recall":
+      return "What fades away?";
     default:
       return "Type your answer...";
   }
