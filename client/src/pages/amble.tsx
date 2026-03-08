@@ -642,15 +642,31 @@ export default function Amble() {
 
   const handleUserInput = useCallback(
     async (text: string) => {
-      if (processingRef.current) return;
       processingRef.current = true;
+      
+      // IMMEDIATE INTERRUPT: Stop ALL typewriter activity
+      setInterruptTypewriter(true);
+      setTypewriterBusy(false);
+      setIsTyping(false);
       setShowSparkButton(false);
-      addUserMessage(text);
-
-      if (typewriterBusy) {
-        setInterruptTypewriter(true);
-        setTypewriterBusy(false);
+      
+      // Clear any pending typewriter promise
+      if (typewriterResolveRef.current) {
+        const resolve = typewriterResolveRef.current;
+        typewriterResolveRef.current = null;
+        resolve();
       }
+      
+      // Remove pending "isTyping" messages from queue
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.sender === "timbuk" && !last.text) {
+          return prev.slice(0, -1);
+        }
+        return prev;
+      });
+      
+      addUserMessage(text);
 
       let s = { ...stateRef.current };
       const beat = currentBeat;
@@ -709,13 +725,14 @@ export default function Amble() {
       }
 
       updateState(s);
-      setInterruptTypewriter(false);
 
       const next = getNextBeat(beat, s);
       if (next) {
         setCurrentBeat(next);
         await advanceBeatRef.current(next, s);
       }
+      
+      setInterruptTypewriter(false);
       processingRef.current = false;
     },
     [currentBeat, addUserMessage, updateState]
