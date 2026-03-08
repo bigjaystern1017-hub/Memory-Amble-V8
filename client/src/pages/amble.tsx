@@ -179,8 +179,12 @@ export default function Amble() {
   }, []);
 
   const savePalaceToDB = useCallback(async (stops: string[]) => {
-    if (isGuest) return;
+    if (isGuest) {
+      localStorage.setItem("memoryamble_palace_stops", JSON.stringify(stops));
+      return;
+    }
     try {
+      localStorage.setItem("memoryamble_palace_stops", JSON.stringify(stops));
       const locations = stops.map((name, i) => ({
         locationName: name,
         position: i + 1,
@@ -192,6 +196,30 @@ export default function Amble() {
     } catch (e) {
       console.error("Failed to save palace:", e);
     }
+  }, [isGuest]);
+
+  const loadSavedPalace = useCallback(async (): Promise<string[] | null> => {
+    const saved = localStorage.getItem("memoryamble_palace_stops");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    if (isGuest) return null;
+    try {
+      const res = await authFetch("/api/palaces");
+      if (res.ok) {
+        const data = await res.json();
+        return Array.isArray(data) && data.length > 0
+          ? data.map((p: any) => p.locationName)
+          : null;
+      }
+    } catch (e) {
+      console.error("Failed to load palaces:", e);
+    }
+    return null;
   }, [isGuest]);
 
   const saveSessionToDB = useCallback(async (s: ConversationState) => {
@@ -430,6 +458,12 @@ export default function Amble() {
         s.category = lesson.category;
         s.dayCount = pd.dayCount;
 
+        const savedPalace = await loadSavedPalace();
+        if (savedPalace && savedPalace.length > 0) {
+          s.placeName = "Your Palace";
+          s.stops = savedPalace;
+        }
+
         const completedToday = latestSession && latestSession.date === todayStr();
         if (completedToday) {
           updateState(s);
@@ -467,7 +501,12 @@ export default function Amble() {
           updateState(s);
           setPhase("chat");
           setTimeout(() => {
-            const startBeat = lesson.cleaning && latestSession && pd.dayCount > 0 ? "cleaning-intro" : "welcome";
+            let startBeat: BeatId = "welcome";
+            if (savedPalace && savedPalace.length > 0 && pd.dayCount > 0) {
+              startBeat = lesson.cleaning ? "cleaning-intro" : "placement-intro";
+            } else if (lesson.cleaning && latestSession && pd.dayCount > 0) {
+              startBeat = "cleaning-intro";
+            }
             advanceBeatRef.current(startBeat, s);
           }, 300);
         }
@@ -978,10 +1017,10 @@ export default function Amble() {
         </button>
         <button
           onClick={async () => {
-            if (isGuest) {
-              localStorage.setItem("memoryamble_current_day", "2");
-              window.location.reload();
-            } else {
+            const dummyPalace = ["Front Door", "Hallway", "Kitchen"];
+            localStorage.setItem("memoryamble_palace_stops", JSON.stringify(dummyPalace));
+            localStorage.setItem("memoryamble_current_day", "2");
+            if (!isGuest) {
               try {
                 const { data: { session } } = await supabase.auth.getSession();
                 const token = session?.access_token;
@@ -994,12 +1033,22 @@ export default function Amble() {
                     },
                     body: JSON.stringify({ currentDay: 2 }),
                   });
-                  window.location.reload();
+                  await fetch("/api/palaces", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                      locations: dummyPalace.map((name, i) => ({ locationName: name, position: i + 1 })),
+                    }),
+                  });
                 }
               } catch (e) {
                 console.error("Failed to skip to day 2:", e);
               }
             }
+            window.location.reload();
           }}
           className="px-2 py-1 text-xs text-muted-foreground/50 hover:text-muted-foreground bg-transparent cursor-pointer"
           data-testid="button-dev-skip-day2"

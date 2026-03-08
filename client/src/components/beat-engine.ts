@@ -252,6 +252,11 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     }
 
     case "welcome":
+      if (state.isReturningUser && state.stops.length > 0) {
+        const stopsStr = state.stops.slice(0, 3).join(", ");
+        const catLabel = isNames ? "people's names" : `${total} ${itemLabel(cat)}`;
+        return `Welcome back, ${name}! I see we have your ${stopsStr}${state.stops.length > 3 ? ", and more" : ""} ready. Today we're working with ${catLabel} -- let's plant some new memories!`;
+      }
       if (state.isReturningUser) {
         const catLabel = isNames ? "people's names" : `${total} ${itemLabel(cat)}`;
         return `Alright, ${name}, welcome to Day ${dayNum}! Today's focus is ${lesson?.focus || "memory"}. We're working with ${catLabel}. Let's build!`;
