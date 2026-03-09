@@ -725,25 +725,12 @@ export default function Amble() {
     [addUserMessage]
   );
 
-  const handleFinish = useCallback(async () => {
-    const nextDay = progressData.currentDay + 1;
-    
-    if (isGuest) {
-      localStorage.setItem("memory-amble-day", String(nextDay));
-    } else {
-      try {
-        await authFetch("/api/user/current-day", {
-          method: "POST",
-          body: JSON.stringify({ currentDay: nextDay }),
-        });
-      } catch (e) {
-        console.error("Failed to save next day:", e);
-      }
-    }
-    
-    setMessages([]);
-    navigate("/");
-  }, [progressData.currentDay, isGuest, authFetch, navigate]);
+  const handleFinish = useCallback(() => {
+    const currentDay = parseInt(localStorage.getItem('currentDay') || '1');
+    const nextDay = currentDay + 1;
+    localStorage.setItem('currentDay', nextDay.toString());
+    window.location.href = '/';
+  }, []);
 
   const handleNewPalace = () => {
     if (isGuest) {
