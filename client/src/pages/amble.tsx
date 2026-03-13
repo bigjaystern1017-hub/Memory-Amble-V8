@@ -173,9 +173,8 @@ export default function Amble() {
   const fetchAssignments = useCallback(
     async (currentState: ConversationState): Promise<ConversationState | null> => {
       try {
-        const response = await fetch("/api/assign-objects", {
+        const response = await authFetch("/api/assign-objects", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             stops: currentState.stops,
             category: currentState.category,

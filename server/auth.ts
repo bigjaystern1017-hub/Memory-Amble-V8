@@ -39,3 +39,28 @@ export async function isAuthenticated(req: Request, res: Response, next: NextFun
     return res.status(401).json({ error: "Authentication failed" });
   }
 }
+
+export async function verifyAuth(req: Request, res: Response, next: NextFunction) {
+  const supabase = getSupabase();
+  if (!supabase) {
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return next();
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (!error && user) {
+      (req as any).user = user;
+    }
+  } catch (err) {
+    console.error("Optional auth verification error:", err);
+  }
+
+  next();
+}

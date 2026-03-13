@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "./db";
 import { palaces, userProgress, sessionHistory } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { isAuthenticated } from "./auth";
+import { isAuthenticated, verifyAuth } from "./auth";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -103,14 +103,48 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  app.post("/api/assign-objects", (req, res) => {
+  app.post("/api/assign-objects", verifyAuth, async (req: any, res) => {
     const parsed = assignItemsSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: "Invalid request" });
     }
 
     const { stops, category } = parsed.data;
-    const pool = category === "names" ? RANDOM_NAMES : RANDOM_OBJECTS;
+    let pool = category === "names" ? RANDOM_NAMES : RANDOM_OBJECTS;
+
+    // If user is authenticated, exclude objects from their last 3 sessions
+    if (req.user?.id) {
+      try {
+        const userId = req.user.id;
+        const recentSessions = await db
+          .select()
+          .from(sessionHistory)
+          .where(eq(sessionHistory.userId, userId))
+          .orderBy(desc(sessionHistory.id))
+          .limit(3);
+
+        const usedObjects = new Set<string>();
+        recentSessions.forEach((session) => {
+          const assignments = JSON.parse(session.assignmentsJson);
+          assignments.forEach((a: any) => {
+            usedObjects.add(a.object);
+          });
+        });
+
+        // Filter pool to exclude used objects
+        pool = pool.filter((obj) => !usedObjects.has(obj));
+
+        // If we filtered out too many, fall back to full pool
+        if (pool.length < stops.length) {
+          pool = category === "names" ? RANDOM_NAMES : RANDOM_OBJECTS;
+        }
+      } catch (error) {
+        console.error("Error excluding previous objects:", error);
+        // Fall back to full pool on error
+        pool = category === "names" ? RANDOM_NAMES : RANDOM_OBJECTS;
+      }
+    }
+
     const items = pickRandom(pool, stops.length);
     const assignments = stops.map((stop, i) => ({
       stopName: stop,
