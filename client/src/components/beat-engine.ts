@@ -300,14 +300,15 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     }
 
     case "react-stop": {
+      const rawStop = state.stops[idx] || "";
       if (idx === total - 1) {
         const routeList = state.stops.map((s, i) => `${ordinal(i + 1)}, ${asStop(s)}`).join(".\n");
-        return `${cap(stop(idx))} -- beautiful. So here's your route through ${place.toLowerCase()}:\n\n${routeList}.\n\nThat, ${name}, is the skeleton of your Memory Palace. Now let me find some ${itemLabel(cat)} to ${isNames ? "introduce" : "put in it"}...`;
+        return `${cap(rawStop)} -- beautiful. So here's your route through ${place.toLowerCase()}:\n\n${routeList}.\n\nThat, ${name}, is the skeleton of your Memory Palace. Now let me find some ${itemLabel(cat)} to ${isNames ? "introduce" : "put in it"}...`;
       }
       if (idx === 0) {
-        return `Oh, ${stop(0)} -- I can see it. That's a lovely first stop, ${name}. Keep walking for me. What comes next?`;
+        return `Oh, ${rawStop} -- I can see it. That's a lovely first stop, ${name}. Keep walking for me. What comes next?`;
       }
-      return `Ah, ${stop(idx)} -- perfect. ${name}, you know this place inside and out.\n\nKeep walking...`;
+      return `Ah, ${rawStop} -- perfect. ${name}, you know this place inside and out.\n\nKeep walking...`;
     }
 
     case "assigning":
