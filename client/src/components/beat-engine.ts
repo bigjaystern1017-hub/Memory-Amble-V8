@@ -406,7 +406,9 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     }
 
     case "palace-wipe": {
-      return `${name}, before we finish, let's clear the palace. Close your eyes and picture yourself at the entrance of ${place.toLowerCase()}. Now imagine a gentle breeze blowing through the whole place. As it passes each stop, the images float away like leaves. Take a slow breath. The palace is clean -- ready for new memories whenever you need it.`;
+      return `${name}, before we finish, we need to clear the palace. Over time, if we don't, the images pile up and clutter the space, making it harder to remember new things. So we'll give it a good cleaning today to keep it fresh and ready for whatever comes next.
+
+Now, close your eyes and picture yourself at the entrance of ${place.toLowerCase()}. Imagine a gentle breeze blowing through the whole place. As it passes each stop, the images float away like leaves. Take a slow breath. The palace is clean -- ready for new memories whenever you need it.`;
     }
 
     case "graduation-offer": {
