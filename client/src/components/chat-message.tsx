@@ -51,9 +51,12 @@ function TypewriterText({ text, onDone, fastForward }: { text: string; onDone?: 
       if (containerRef.current) {
         const el = containerRef.current.closest("[data-testid='chat-scroll']");
         if (el) {
-          requestAnimationFrame(() => {
-            el.scrollTop = el.scrollHeight;
-          });
+          setTimeout(() => {
+            el.scrollTo({
+              top: el.scrollHeight,
+              behavior: "smooth",
+            });
+          }, 250);
         }
       }
     }

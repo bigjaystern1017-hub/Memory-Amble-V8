@@ -120,7 +120,7 @@ export default function Amble() {
           top: scrollRef.current.scrollHeight,
           behavior: "smooth",
         });
-      }, 50);
+      }, 250);
     }
   }, []);
 
