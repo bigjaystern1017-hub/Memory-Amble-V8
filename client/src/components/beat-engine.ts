@@ -108,6 +108,14 @@ function asStop(raw: string): string {
   return flipPronoun(raw);
 }
 
+function withYour(stopName: string): string {
+  const lower = stopName.toLowerCase().trim();
+  if (lower.startsWith("my ") || lower.startsWith("your ")) {
+    return stopName;
+  }
+  return `your ${stopName}`;
+}
+
 export function getProgressStep(beatId: BeatId): number {
   const checkInBeats: BeatId[] = ["check-in-intro", "check-in-recall", "react-check-in", "check-in-done"];
   const cleaningBeats: BeatId[] = ["cleaning-intro", "cleaning-recall", "react-cleaning"];
@@ -314,19 +322,19 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
         const prevStops = state.stops.slice(0, idx).map((s) => asStop(s)).join(", ");
         return `You're past ${prevStops} now. As you continue through ${place.toLowerCase()}, where do you end up? What's your last stop?`;
       }
-      return `You've passed ${stop(idx - 1)} and you're moving through the space. What do you notice next?`;
+      return `You've passed ${withYour(asStop(state.stops[idx - 1]))} and you're moving through the space. What do you notice next?`;
     }
 
     case "react-stop": {
       const rawStop = state.stops[idx] || "";
       if (idx === total - 1) {
-        const routeList = state.stops.map((s, i) => `${ordinal(i + 1)}, ${asStop(s)}`).join(".\n");
+        const routeList = state.stops.map((s, i) => `${ordinal(i + 1)}, ${withYour(asStop(s))}`).join(".\n");
         return `${cap(rawStop)} -- beautiful. So here's your route through ${place.toLowerCase()}:\n\n${routeList}.\n\nThat, ${name}, is the skeleton of your Memory Palace. Now let me find some ${itemLabel(cat)} to ${isNames ? "introduce" : "put in it"}...`;
       }
       if (idx === 0) {
-        return `Oh, ${rawStop} -- I can see it. That's a lovely first stop, ${name}. Keep walking for me. What comes next?`;
+        return `Oh, ${withYour(rawStop)} -- I can see it. That's a lovely first stop, ${name}. Keep walking for me. What comes next?`;
       }
-      return `Ah, ${rawStop} -- perfect. ${name}, you know this place inside and out.\n\nKeep walking...`;
+      return `Ah, ${withYour(rawStop)} -- perfect. ${name}, you know this place inside and out.\n\nKeep walking...`;
     }
 
     case "assigning":
