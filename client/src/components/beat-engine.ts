@@ -353,12 +353,12 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
         return `${stopLabel}. You meet ${a.object}. What's happening?`;
       }
       if (idx === 0) {
-        return `${stopLabel}. Place ${a.object} right there. Remember to make it bold, vivid, and unique to you. What do you see happening?`;
+        return `${stopLabel}. Place a ${a.object} right there. Remember to make it bold, vivid, and unique to you. What do you see happening?`;
       }
       if (idx === total - 1) {
-        return `Last one. ${stopLabel}, and it's ${a.object}. Go wild, ${name} -- make it yours. What do you see?`;
+        return `Last one. ${stopLabel}, and it's a ${a.object}. Go wild, ${name} -- make it yours. What do you see?`;
       }
-      return `${stopLabel}. The item is ${a.object}. What do you see happening there?`;
+      return `${stopLabel}. The item is a ${a.object}. What do you see happening there?`;
     }
 
     case "mirror-object": {
