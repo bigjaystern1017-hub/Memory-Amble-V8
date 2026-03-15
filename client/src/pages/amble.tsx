@@ -287,7 +287,7 @@ export default function Amble() {
     async (beat: BeatId, currentState: ConversationState) => {
       if (beat === "assigning") {
         setIsTyping(true);
-        scrollToBottom();
+        scrollToLatestMessage();
         const newState = await fetchAssignments(currentState);
         setIsTyping(false);
 
@@ -405,7 +405,7 @@ export default function Amble() {
         await advanceBeat(next, nextState);
       }
     },
-    [showTimbukWithTypewriter, addTimbukInstant, scrollToBottom, fetchAssignments, updateState, saveProgressToDB, saveSessionToDB, savePalaceToDB, progressData]
+    [showTimbukWithTypewriter, addTimbukInstant, scrollToLatestMessage, fetchAssignments, updateState, saveProgressToDB, saveSessionToDB, savePalaceToDB, progressData]
   );
 
   const advanceBeatRef = useRef(advanceBeat);
