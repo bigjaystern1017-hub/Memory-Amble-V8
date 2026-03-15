@@ -312,6 +312,9 @@ export default function Amble() {
       if (!text) return;
 
       await showTimbukWithTypewriter(text);
+      
+      // Give user time to read the message before showing the next one
+      await new Promise((resolve) => setTimeout(resolve, 2500));
 
       if (beat === "graduation-offer") {
         const graduated = { ...currentState, graduated: true };
