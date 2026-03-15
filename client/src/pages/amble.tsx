@@ -100,6 +100,7 @@ export default function Amble() {
 
   const msgIdRef = useRef(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
   const processingRef = useRef(false);
   const typewriterResolveRef = useRef<(() => void) | null>(null);
   const initRef = useRef(false);
@@ -113,12 +114,12 @@ export default function Amble() {
     window.scrollTo(0, 0);
   }, [phase]);
 
-  const scrollToBottom = useCallback(() => {
-    if (scrollRef.current) {
+  const scrollToLatestMessage = useCallback(() => {
+    if (lastMessageRef.current) {
       setTimeout(() => {
-        scrollRef.current?.scrollTo({
-          top: scrollRef.current.scrollHeight,
+        lastMessageRef.current?.scrollIntoView({
           behavior: "smooth",
+          block: "nearest",
         });
       }, 250);
     }
@@ -128,9 +129,9 @@ export default function Amble() {
     (text: string) => {
       const id = ++msgIdRef.current;
       setMessages((prev) => [...prev, { id, sender: "gladys", text }]);
-      scrollToBottom();
+      scrollToLatestMessage();
     },
-    [scrollToBottom]
+    [scrollToLatestMessage]
   );
 
   const showTimbukWithTypewriter = useCallback(
@@ -152,21 +153,21 @@ export default function Amble() {
   const handleTypewriterDone = useCallback(() => {
     setTypewriterBusy(false);
     setFastForward(false);
-    scrollToBottom();
+    scrollToLatestMessage();
     if (typewriterResolveRef.current) {
       const resolve = typewriterResolveRef.current;
       typewriterResolveRef.current = null;
       resolve();
     }
-  }, [scrollToBottom]);
+  }, [scrollToLatestMessage]);
 
   const addTimbukInstant = useCallback(
     (text: string) => {
       const id = ++msgIdRef.current;
       setMessages((prev) => [...prev, { id, sender: "timbuk", text }]);
-      scrollToBottom();
+      scrollToLatestMessage();
     },
-    [scrollToBottom]
+    [scrollToLatestMessage]
   );
 
   const fetchAssignments = useCallback(
@@ -980,16 +981,20 @@ export default function Amble() {
         data-testid="chat-scroll"
       >
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-4">
-          {messages.map((msg) => (
-            <ChatMessage
+          {messages.map((msg, idx) => (
+            <div
               key={msg.id}
-              sender={msg.sender}
-              text={msg.text}
-              typewriter={msg.typewriter && msg.id === lastMessageId}
-              onTypewriterDone={msg.id === lastMessageId ? handleTypewriterDone : undefined}
-              fastForward={msg.id === lastMessageId && fastForward}
-              onSkipTyping={msg.id === lastMessageId && typewriterBusy ? () => setFastForward(true) : undefined}
-            />
+              ref={idx === messages.length - 1 ? lastMessageRef : null}
+            >
+              <ChatMessage
+                sender={msg.sender}
+                text={msg.text}
+                typewriter={msg.typewriter && msg.id === lastMessageId}
+                onTypewriterDone={msg.id === lastMessageId ? handleTypewriterDone : undefined}
+                fastForward={msg.id === lastMessageId && fastForward}
+                onSkipTyping={msg.id === lastMessageId && typewriterBusy ? () => setFastForward(true) : undefined}
+              />
+            </div>
           ))}
           {isTyping && <ChatMessage sender="timbuk" text="" isTyping />}
         </div>
