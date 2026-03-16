@@ -28,6 +28,7 @@ export interface ProgressData {
   dayCount: number;
   streak: number;
   lastLogin: string | null;
+  subscriptionStatus?: string;
 }
 
 export function getNextLevel(currentLevel: number, lastScore: number, lastTotal: number): number {

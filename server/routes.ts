@@ -1,11 +1,16 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import OpenAI from "openai";
+import Stripe from "stripe";
 import { z } from "zod";
 import { db } from "./db";
 import { palaces, userProgress, sessionHistory } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { isAuthenticated, verifyAuth } from "./auth";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2026-02-25.clover",
+});
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -184,6 +189,7 @@ export async function registerRoutes(
           dayCount: 0,
           streak: 0,
           lastLogin: null,
+          subscriptionStatus: "inactive",
         });
       }
       res.json(progress);
@@ -414,6 +420,79 @@ export async function registerRoutes(
       console.error("Error fetching user progress:", error);
       res.status(500).json({ error: "Failed to fetch progress" });
     }
+  });
+
+  app.post("/api/create-checkout-session", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { email } = req.body;
+      const origin = `${req.protocol}://${req.get("host")}`;
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [{ price: "price_1TBgLTHJdGxZBU1hSpwIVY80", quantity: 1 }],
+        mode: "subscription",
+        customer_email: email || undefined,
+        subscription_data: {
+          trial_period_days: 7,
+          metadata: { userId },
+        },
+        success_url: `${origin}/amble?session=success`,
+        cancel_url: `${origin}/amble`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  app.post("/api/webhook", async (req: any, res) => {
+    const sig = req.headers["stripe-signature"] as string;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.error("STRIPE_WEBHOOK_SECRET not configured");
+      return res.status(500).json({ error: "Webhook secret not configured" });
+    }
+
+    let event: Stripe.Event;
+    try {
+      event = stripe.webhooks.constructEvent(req.rawBody as Buffer, sig, webhookSecret);
+    } catch (err: any) {
+      console.error("Webhook signature verification failed:", err.message);
+      return res.status(400).json({ error: `Webhook error: ${err.message}` });
+    }
+
+    const subscription = event.data.object as Stripe.Subscription;
+    const userId = subscription.metadata?.userId;
+
+    if (event.type === "customer.subscription.created") {
+      if (userId) {
+        try {
+          await db
+            .update(userProgress)
+            .set({ subscriptionStatus: "active" })
+            .where(eq(userProgress.userId, userId));
+        } catch (e) {
+          console.error("Failed to activate subscription:", e);
+        }
+      }
+    } else if (event.type === "customer.subscription.deleted") {
+      if (userId) {
+        try {
+          await db
+            .update(userProgress)
+            .set({ subscriptionStatus: "inactive" })
+            .where(eq(userProgress.userId, userId));
+        } catch (e) {
+          console.error("Failed to deactivate subscription:", e);
+        }
+      }
+    }
+
+    res.json({ received: true });
   });
 
   return httpServer;

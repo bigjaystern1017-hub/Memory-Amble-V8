@@ -56,7 +56,7 @@ async function authFetch(path: string, options: RequestInit = {}) {
 
 export default function Amble() {
   const [, navigate] = useLocation();
-  const { isAuthenticated, isLoading: authLoading, signOut, displayName } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, signOut, displayName, user } = useAuth();
 
   const isGuest = !isAuthenticated;
 
@@ -74,7 +74,8 @@ export default function Amble() {
     return cleanAnswer.includes(cleanCorrect) || cleanCorrect.includes(cleanAnswer);
   };
 
-  const [phase, setPhase] = useState<"loading" | "education" | "name" | "chat" | "results">("loading");
+  const [phase, setPhase] = useState<"loading" | "education" | "name" | "chat" | "results" | "paywall">("loading");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentBeat, setCurrentBeat] = useState<BeatId>("welcome");
   const [isTyping, setIsTyping] = useState(false);
@@ -542,6 +543,26 @@ export default function Amble() {
           }
         }
 
+        // After guest migration, check if we should redirect to Stripe checkout
+        const checkoutPending = localStorage.getItem("memory-amble-checkout-pending");
+        if (checkoutPending) {
+          localStorage.removeItem("memory-amble-checkout-pending");
+          try {
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            const checkoutRes = await authFetch("/api/create-checkout-session", {
+              method: "POST",
+              body: JSON.stringify({ email: authUser?.email || "" }),
+            });
+            const { url } = await checkoutRes.json();
+            if (url) {
+              window.location.href = url;
+              return;
+            }
+          } catch (e) {
+            console.error("Post-migration checkout failed:", e);
+          }
+        }
+
         setProgressData(pd);
 
         let latestSession: SessionData | null = null;
@@ -558,6 +579,18 @@ export default function Amble() {
 
         if (pd.dayCount === 0) {
           setPhase("name");
+          return;
+        }
+
+        // Paywall: Day 2+ requires an active subscription
+        // Skip paywall if returning from a successful Stripe checkout
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionSuccess = urlParams.get("session") === "success";
+        if (sessionSuccess) {
+          window.history.replaceState({}, "", "/amble");
+        }
+        if (pd.dayCount >= 1 && pd.subscriptionStatus !== "active" && !sessionSuccess) {
+          setPhase("paywall");
           return;
         }
 
@@ -823,6 +856,21 @@ export default function Amble() {
     window.location.reload();
   }, []);
 
+  const handleCheckout = useCallback(async () => {
+    setCheckoutLoading(true);
+    try {
+      const res = await authFetch("/api/create-checkout-session", {
+        method: "POST",
+        body: JSON.stringify({ email: user?.email || "" }),
+      });
+      const { url } = await res.json();
+      if (url) window.location.href = url;
+    } catch (e) {
+      console.error("Checkout failed:", e);
+      setCheckoutLoading(false);
+    }
+  }, [authFetch, user]);
+
   const handleNewPalace = () => {
     if (isGuest) {
       navigate("/login");
@@ -976,6 +1024,61 @@ export default function Amble() {
         stops={state.stops}
         pendingSession={pendingSession}
       />
+    );
+  }
+
+  if (phase === "paywall") {
+    return (
+      <div className="min-h-dvh bg-gradient-to-b from-primary/10 to-background flex flex-col items-center justify-center px-4 py-10">
+        <div className="max-w-md w-full mx-auto space-y-8 text-center">
+          <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mx-auto">
+            <Brain className="w-10 h-10 text-primary-foreground" />
+          </div>
+
+          <div className="space-y-3">
+            <h1 className="font-serif text-3xl font-semibold leading-snug">
+              Day {progressData.dayCount + 1} is ready for you, {displayName}.
+            </h1>
+            <p className="text-muted-foreground text-base leading-relaxed">
+              You've built a real foundation. A subscription keeps the practice going — and the memories sticking.
+            </p>
+          </div>
+
+          <div className="bg-background border border-border/60 rounded-xl p-5 space-y-3 text-left">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">What you get</p>
+            {["30-day guided bootcamp", "New palace every session", "Check-in recalls & cleaning rituals", "Streak tracking"].map((item) => (
+              <div key={item} className="flex items-center gap-2 text-sm text-foreground">
+                <span className="text-primary font-bold">✓</span>
+                {item}
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-3">
+            <Button
+              size="lg"
+              className="w-full text-base"
+              onClick={handleCheckout}
+              disabled={checkoutLoading}
+              data-testid="button-paywall-subscribe"
+            >
+              {checkoutLoading ? "Opening checkout..." : "Start 7-Day Free Trial"}
+            </Button>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <span className="font-medium text-foreground">$8.99/month</span> after your free trial — cancel anytime.{" "}
+              <span className="line-through">$16.99/month</span>
+            </p>
+          </div>
+
+          <button
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            onClick={signOut}
+            data-testid="button-paywall-signout"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
     );
   }
 

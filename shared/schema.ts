@@ -19,6 +19,7 @@ export const userProgress = pgTable("user_progress", {
   dayCount: integer("day_count").notNull().default(0),
   streak: integer("streak").notNull().default(0),
   lastLogin: timestamp("last_login").defaultNow(),
+  subscriptionStatus: text("subscription_status").notNull().default("inactive"),
 });
 
 export const sessionHistory = pgTable("session_history", {

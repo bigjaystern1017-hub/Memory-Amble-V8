@@ -59,7 +59,22 @@ export function AmbleResults({
   const storePendingMigration = () => {
     if (pendingSession) {
       localStorage.setItem("memory-amble-pending-session", JSON.stringify(pendingSession));
+      localStorage.setItem("memory-amble-checkout-pending", "true");
     }
+  };
+
+  const redirectToCheckout = async (token: string, userEmail: string) => {
+    const res = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ email: userEmail }),
+    });
+    if (!res.ok) throw new Error("Checkout session creation failed");
+    const { url } = await res.json();
+    if (url) window.location.href = url;
   };
 
   const handleSeeYouTomorrow = () => {
@@ -115,6 +130,16 @@ export function AmbleResults({
         return;
       }
       storePendingMigration();
+      try {
+        const { data: { session: authSession } } = await supabase.auth.getSession();
+        const token = authSession?.access_token;
+        if (token) {
+          await redirectToCheckout(token, email);
+          return;
+        }
+      } catch (e) {
+        console.error("Checkout redirect failed:", e);
+      }
       window.location.reload();
     }
   };
