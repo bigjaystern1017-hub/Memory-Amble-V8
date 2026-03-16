@@ -87,7 +87,7 @@ export default function Login() {
     }
     toast({
       title: "Check your email",
-      description: "We sent you a confirmation link. Click it to finish signing up.",
+      description: "We sent you a confirmation link. Click it to finish signing up.\nDon't see it? Check your junk or spam folder.",
     });
     setLoading(false);
   };
