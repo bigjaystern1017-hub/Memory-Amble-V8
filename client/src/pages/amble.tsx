@@ -589,10 +589,11 @@ export default function Amble() {
         if (sessionSuccess) {
           window.history.replaceState({}, "", "/amble");
         }
-        if (pd.dayCount >= 1 && pd.subscriptionStatus !== "active" && !sessionSuccess) {
-          setPhase("paywall");
-          return;
-        }
+        // TODO: Re-enable subscription paywall after launch
+        // if (pd.dayCount >= 1 && pd.subscriptionStatus !== "active" && !sessionSuccess) {
+        //   setPhase("paywall");
+        //   return;
+        // }
 
         const lesson = getLessonConfig(pd.currentLevel, pd.dayCount, pd.currentCategory as "objects" | "names");
         const s = createFreshState();
