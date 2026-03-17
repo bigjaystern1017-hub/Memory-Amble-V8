@@ -481,8 +481,7 @@ export default function Amble() {
             updateState(s);
             setPhase("chat");
             setTimeout(() => {
-              const startBeat: BeatId = lesson.cleaning ? "cleaning-intro" : "placement-intro";
-              advanceBeatRef.current(startBeat, s);
+              advanceBeatRef.current("welcome", s);
             }, 300);
             return;
           } catch {
@@ -673,13 +672,7 @@ export default function Amble() {
           updateState(s);
           setPhase("chat");
           setTimeout(() => {
-            let startBeat: BeatId = "welcome";
-            if (savedPalace && savedPalace.length > 0 && pd.dayCount > 0) {
-              startBeat = lesson.cleaning ? "cleaning-intro" : "placement-intro";
-            } else if (lesson.cleaning && latestSession && pd.dayCount > 0) {
-              startBeat = "cleaning-intro";
-            }
-            advanceBeatRef.current(startBeat, s);
+            advanceBeatRef.current("welcome", s);
           }, 300);
         }
       } catch (e) {

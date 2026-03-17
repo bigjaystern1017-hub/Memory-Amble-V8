@@ -131,7 +131,6 @@ function withYour(stopName: string): string {
 export function getProgressStep(beatId: BeatId): number {
   const checkInBeats: BeatId[] = ["check-in-intro", "check-in-recall", "react-check-in", "check-in-done"];
   const cleaningBeats: BeatId[] = ["cleaning-intro", "cleaning-recall", "react-cleaning"];
-  const preCleanBeats: BeatId[] = ["pre-clean", "cleaning-walkthrough", "cleaning-walkthrough-done"];
   const palaceBeats: BeatId[] = ["ask-place", "confirm-same-place", "react-place", "ask-stop", "react-stop", "assigning"];
   const rememberBeats: BeatId[] = ["placement-intro", "place-object", "mirror-object"];
   const recallBeats: BeatId[] = ["walkthrough-intro", "reverse-intro", "recall", "react-recall"];
@@ -139,7 +138,7 @@ export function getProgressStep(beatId: BeatId): number {
   if (beatId === "welcome") return 0;
   if (checkInBeats.includes(beatId)) return 0;
   if (cleaningBeats.includes(beatId)) return 0;
-  if (preCleanBeats.includes(beatId)) return 1;
+  if (beatId === "pre-clean" || beatId === "cleaning-walkthrough" || beatId === "cleaning-walkthrough-done") return 0;
   if (palaceBeats.includes(beatId)) return 1;
   if (rememberBeats.includes(beatId)) return 2;
   if (recallBeats.includes(beatId)) return 3;
@@ -298,18 +297,14 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     }
 
     case "pre-clean": {
-      return `Before we build today, let's clear your palace from yesterday. You left some vivid things in there — let us make sure they float away so you have fresh space for today.`;
+      return `Before we build today, let us take a moment to clear your palace from yesterday. A clean palace is ready for new memories. Picture a gentle breeze moving through your space, lifting everything you placed there like leaves on the wind. Take a breath. Watch it all float away.`;
     }
 
-    case "cleaning-walkthrough": {
-      const a = state.preCleanAssignments[idx];
-      if (!a) return "";
-      const stopLabel = withYour(asStop(a.stopName));
-      return `At ${stopLabel}, you left a ${a.object}. Picture it clearly... now watch it lift away on the breeze.`;
-    }
+    case "cleaning-walkthrough":
+      return "";
 
     case "cleaning-walkthrough-done": {
-      return `The palace is clean. Fresh. Ready for today.`;
+      return `Your palace is clean. Fresh. Ready for today.`;
     }
 
     case "welcome": {
@@ -558,17 +553,16 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
       return "welcome";
 
     case "pre-clean":
-      return "cleaning-walkthrough";
+      return "cleaning-walkthrough-done";
 
     case "cleaning-walkthrough":
-      if (idx < state.preCleanAssignments.length - 1) return "cleaning-walkthrough";
       return "cleaning-walkthrough-done";
 
     case "cleaning-walkthrough-done":
       return "ask-place";
 
     case "welcome":
-      if (state.preCleanAssignments.length > 0) return "pre-clean";
+      if (state.dayCount > 0) return "pre-clean";
       return "ask-place";
 
     case "ask-place":
