@@ -314,7 +314,14 @@ export default function Amble() {
       }
 
       const text = getTimbukMessage(beat, currentState);
-      if (!text) return;
+      if (!text) {
+        const next = getNextBeat(beat, currentState);
+        if (next) {
+          setCurrentBeat(next);
+          await advanceBeat(next, currentState);
+        }
+        return;
+      }
 
       await showTimbukWithTypewriter(text);
 
