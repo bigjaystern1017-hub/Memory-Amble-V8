@@ -99,7 +99,7 @@ const smartConfirmSchema = z.object({
   objectName: z.string().optional().default(""),
   userAssociation: z.string(),
   stopName: z.string().optional().default(""),
-  context: z.enum(["object-placement", "stop-confirmation"]).default("object-placement"),
+  context: z.enum(["object-placement", "stop-confirmation", "place-confirmation"]).default("object-placement"),
 });
 
 const savePalaceSchema = z.object({
@@ -227,14 +227,21 @@ export async function registerRoutes(
       const { userName, objectName, userAssociation, stopName, context } = parsed.data;
 
       const isStopConfirmation = context === "stop-confirmation";
+      const isPlaceConfirmation = context === "place-confirmation";
 
-      const systemPrompt = isStopConfirmation
-        ? `You are Timbuk, a warm memory coach. The user just named a stop in their memory palace. They may have included personal detail or description. Respond in 15 words or less, warmly acknowledging what makes their stop specific and personal. If they gave extra detail like a color, a person, or a memory — reference it. If it is a plain noun with no detail, give a warm generic confirmation. Never say brilliant or perfect.`
-        : `You are Timbuk, a warm memory coach. The user just described their vivid association for a memory palace object. Respond in 15 words or less. Be specific to what they said — reference their actual association, not just the object. If their association is creative or funny, lean into it. Sound warm and delighted, not generic.`;
+      let systemPrompt = "";
+      let userMessage = "";
 
-      const userMessage = isStopConfirmation
-        ? `${userName} named their stop: "${userAssociation}". Respond now.`
-        : `${userName} placed a ${objectName} at their ${stopName} and described it as: "${userAssociation}". Respond now.`;
+      if (isPlaceConfirmation) {
+        systemPrompt = `You are Timbuk, a warm memory coach. The user just named the place for their memory palace. It might be a specific location with personal detail. Respond in 15 words or less, warmly acknowledging what makes it specific. If they mentioned a city, neighborhood, or personal detail — reference it.`;
+        userMessage = `${userName} chose their palace location: "${userAssociation}". Respond now.`;
+      } else if (isStopConfirmation) {
+        systemPrompt = `You are Timbuk, a warm memory coach. The user just named a stop in their memory palace. They may have included personal detail or description. Respond in 15 words or less, warmly acknowledging what makes their stop specific and personal. If they gave extra detail like a color, a person, or a memory — reference it. If it is a plain noun with no detail, give a warm generic confirmation. Never say brilliant or perfect.`;
+        userMessage = `${userName} named their stop: "${userAssociation}". Respond now.`;
+      } else {
+        systemPrompt = `You are Timbuk, a warm memory coach. The user just described their vivid association for a memory palace object. Respond in 15 words or less. Be specific to what they said — reference their actual association, not just the object. If their association is creative or funny, lean into it. Sound warm and delighted, not generic.`;
+        userMessage = `${userName} placed a ${objectName} at their ${stopName} and described it as: "${userAssociation}". Respond now.`;
+      }
 
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini",

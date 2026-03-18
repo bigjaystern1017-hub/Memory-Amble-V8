@@ -19,6 +19,8 @@ import {
   getReactRecallFallback,
   getReactStopFallback,
   getReactStopRouteAppend,
+  getReactPlaceFallback,
+  getReactPlaceStopIntro,
 } from "@/components/beat-engine";
 import {
   getLessonConfig,
@@ -275,7 +277,30 @@ export default function Home() {
         setIsTyping(true);
         scrollToBottom();
 
-        if (beat === "react-stop") {
+        if (beat === "react-place") {
+          const fallback = getReactPlaceFallback(currentState);
+          const userAssociation = currentState.placeName || "";
+          try {
+            const resp = await fetch("/api/smart-confirm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userName: currentState.userName,
+                userAssociation,
+                context: "place-confirmation",
+              }),
+            });
+            const data = await resp.json();
+            const ack = data.confirmation || fallback;
+            displayText = !currentState.isReturningUser
+              ? `${ack}${getReactPlaceStopIntro(currentState)}`
+              : ack;
+          } catch {
+            displayText = !currentState.isReturningUser
+              ? `${fallback}${getReactPlaceStopIntro(currentState)}`
+              : fallback;
+          }
+        } else if (beat === "react-stop") {
           const idx = currentState.stepIndex;
           const total = currentState.itemCount;
           const isLast = idx === total - 1;

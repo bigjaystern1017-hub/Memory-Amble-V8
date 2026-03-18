@@ -122,12 +122,26 @@ function asStop(raw: string): string {
   return flipPronoun(raw);
 }
 
+function titleCase(input: string): string {
+  return input
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 function withYour(stopName: string): string {
   const lower = stopName.toLowerCase().trim();
+  const words = lower.split(/\s+/);
+  const descriptiveWords = new Set(["had", "was", "with", "is", "are", "were", "has", "our", "my"]);
+  
+  // Don't add 'your' if: already has my/your, more than 4 words, or contains descriptive words
   if (lower.startsWith("my ") || lower.startsWith("your ")) {
-    return stopName;
+    return titleCase(stopName);
   }
-  return `your ${stopName}`;
+  if (words.length > 4 || words.some(w => descriptiveWords.has(w))) {
+    return titleCase(stopName);
+  }
+  return `your ${titleCase(stopName)}`;
 }
 
 export function getProgressStep(beatId: BeatId): number {
@@ -365,10 +379,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     }
 
     case "react-place":
-      if (state.isReturningUser) {
-        return `${cap(place.toLowerCase())} -- lovely choice. Let's find ${total} stops along your path.`;
-      }
-      return `Oh, ${place.toLowerCase()}! I love that you picked that, ${name}. I can already picture you there. A place you really know is worth its weight in gold for this.\n\nNow, imagine you're walking through ${place.toLowerCase()} right now. We're going to choose ${total} spots along your path -- little landmarks you'd naturally pass by.`;
+      return SMART_CONFIRM;
 
     case "ask-stop": {
       if (idx === 0) {
@@ -497,6 +508,22 @@ Now, close your eyes and picture yourself at the entrance of ${place.toLowerCase
     default:
       return "";
   }
+}
+
+export function getReactPlaceFallback(state: ConversationState): string {
+  const name = state.userName || "friend";
+  const place = asPlace(state.placeName);
+  const total = state.itemCount;
+  if (state.isReturningUser) {
+    return `${place} -- lovely choice. Let's find ${total} stops along your path.`;
+  }
+  return `Oh, ${place}! I love that you picked that, ${name}. I can already picture you there. A place you really know is worth its weight in gold for this.`;
+}
+
+export function getReactPlaceStopIntro(state: ConversationState): string {
+  const place = asPlace(state.placeName);
+  const total = state.itemCount;
+  return `\n\nNow, imagine you're walking through ${place.toLowerCase()} right now. We're going to choose ${total} spots along your path -- little landmarks you'd naturally pass by.`;
 }
 
 export function getReactStopFallback(state: ConversationState): string {
