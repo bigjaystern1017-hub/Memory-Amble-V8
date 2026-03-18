@@ -94,6 +94,13 @@ const sparkSchema = z.object({
   placeName: z.string(),
 });
 
+const smartConfirmSchema = z.object({
+  userName: z.string(),
+  objectName: z.string(),
+  userAssociation: z.string(),
+  stopName: z.string(),
+});
+
 const savePalaceSchema = z.object({
   locations: z.array(z.object({
     locationName: z.string(),
@@ -206,6 +213,39 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Error generating spark:", error);
       res.status(500).json({ error: "Could not generate a hint right now." });
+    }
+  });
+
+  app.post("/api/smart-confirm", async (req, res) => {
+    try {
+      const parsed = smartConfirmSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid request" });
+      }
+
+      const { userName, objectName, userAssociation, stopName } = parsed.data;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are Timbuk, a warm memory coach. The user just described their vivid association for a memory palace object. Respond in 15 words or less. Be specific to what they said — reference their actual association, not just the object. If their association is creative or funny, lean into it. Sound warm and delighted, not generic.`,
+          },
+          {
+            role: "user",
+            content: `${userName} placed a ${objectName} at their ${stopName} and described it as: "${userAssociation}". Respond now.`,
+          },
+        ],
+        temperature: 1.1,
+        max_tokens: 50,
+      });
+
+      const confirmation = response.choices[0]?.message?.content?.trim() || "";
+      res.json({ confirmation });
+    } catch (error: any) {
+      console.error("Error generating smart confirmation:", error);
+      res.status(500).json({ error: "Could not generate confirmation." });
     }
   });
 

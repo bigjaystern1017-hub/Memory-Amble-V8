@@ -18,6 +18,9 @@ import {
   getProgressStep,
   recallAssignmentIndex,
   isStrugglePhrase,
+  SMART_CONFIRM,
+  getMirrorObjectFallback,
+  getReactRecallFallback,
 } from "@/components/beat-engine";
 import {
   getLessonConfig,
@@ -323,7 +326,47 @@ export default function Amble() {
         return;
       }
 
-      await showTimbukWithTypewriter(text);
+      let displayText = text;
+      if (text === SMART_CONFIRM) {
+        setIsTyping(true);
+        scrollToBottom();
+        const fallback = beat === "mirror-object"
+          ? getMirrorObjectFallback(currentState)
+          : getReactRecallFallback(currentState);
+        try {
+          let objectName = "";
+          let userAssociation = "";
+          let stopName = "";
+          if (beat === "mirror-object") {
+            const a = currentState.assignments[currentState.stepIndex];
+            objectName = a?.object || "";
+            userAssociation = currentState.userScenes[currentState.stepIndex] || "";
+            stopName = a?.stopName || "";
+          } else {
+            const ri = recallAssignmentIndex(currentState.stepIndex, currentState);
+            const a = currentState.assignments[ri];
+            objectName = a?.object || "";
+            userAssociation = currentState.userAnswers[currentState.stepIndex] || "";
+            stopName = a?.stopName || "";
+          }
+          const resp = await fetch("/api/smart-confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userName: currentState.userName,
+              objectName,
+              userAssociation,
+              stopName,
+            }),
+          });
+          const data = await resp.json();
+          displayText = data.confirmation || fallback;
+        } catch {
+          displayText = fallback;
+        }
+      }
+
+      await showTimbukWithTypewriter(displayText);
 
       if (beat === "graduation-offer") {
         const graduated = { ...currentState, graduated: true };

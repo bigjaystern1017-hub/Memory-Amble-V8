@@ -58,6 +58,8 @@ export interface ConversationState {
   preCleanAssignments: Assignment[];
 }
 
+export const SMART_CONFIRM = "__SMART_CONFIRM__";
+
 export function isReverseRecall(state: ConversationState): boolean {
   return state.lessonConfig?.reverse === true;
 }
@@ -423,17 +425,8 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return `${stopLabel}. The item is a ${a.object}. What do you see happening there?`;
     }
 
-    case "mirror-object": {
-      const scene = state.userScenes[idx] || "";
-      const snippet = scene.length > 40 ? scene.substring(0, 40).trim() + "..." : scene;
-      if (idx === total - 1) {
-        return `"${snippet}" -- love it. All ${total} planted, ${name}. Your Memory Palace is alive!\n\nNow the real test. I'll walk you back through ${place.toLowerCase()} and you tell me what you see at each stop. Whatever you remember is a win.`;
-      }
-      if (idx === 0) {
-        return `"${snippet}" -- brilliant, ${name}. That one's locked in. Next stop.`;
-      }
-      return `"${snippet}" -- perfect, ${name}. ${total - idx - 1} to go.`;
-    }
+    case "mirror-object":
+      return SMART_CONFIRM;
 
     case "walkthrough-intro": {
       return `Now here is the magic part. Close your eyes if you like. Picture yourself back at the entrance of ${place.toLowerCase()}. Just walk. Do not try to remember — just look at each stop. Whatever you placed there will be waiting.`;
@@ -474,15 +467,8 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       const isCorrect = fuzzyMatch(answer, a.object);
       const isLast = idx === total - 1;
 
-      if (isCorrect && isLast) {
-        return `${a.object} -- brilliant finish, ${name}!`;
-      }
-      if (isCorrect) {
-        return `Yes! ${a.object}! That's the palace at work, ${name}. Keep walking...`;
-      }
-      if (isLast) {
-        return `That one was ${a.object}. The pictures will get clearer with practice, ${name}.`;
-      }
+      if (isCorrect) return SMART_CONFIRM;
+      if (isLast) return `That one was ${a.object}. The pictures will get clearer with practice, ${name}.`;
       return `It was ${a.object}. No worries -- keep walking...`;
     }
 
@@ -520,6 +506,34 @@ Now, close your eyes and picture yourself at the entrance of ${place.toLowerCase
     default:
       return "";
   }
+}
+
+export function getMirrorObjectFallback(state: ConversationState): string {
+  const name = state.userName || "friend";
+  const place = asPlace(state.placeName);
+  const idx = state.stepIndex;
+  const total = state.itemCount;
+  const scene = state.userScenes[idx] || "";
+  const snippet = scene.length > 40 ? scene.substring(0, 40).trim() + "..." : scene;
+  if (idx === total - 1) {
+    return `"${snippet}" -- love it. All ${total} planted, ${name}. Your Memory Palace is alive!\n\nNow the real test. I'll walk you back through ${place.toLowerCase()} and you tell me what you see at each stop. Whatever you remember is a win.`;
+  }
+  if (idx === 0) {
+    return `"${snippet}" -- brilliant, ${name}. That one's locked in. Next stop.`;
+  }
+  return `"${snippet}" -- perfect, ${name}. ${total - idx - 1} to go.`;
+}
+
+export function getReactRecallFallback(state: ConversationState): string {
+  const name = state.userName || "friend";
+  const idx = state.stepIndex;
+  const total = state.itemCount;
+  const ri = recallAssignmentIndex(idx, state);
+  const a = state.assignments[ri];
+  if (!a) return "";
+  const isLast = idx === total - 1;
+  if (isLast) return `${a.object} — brilliant finish, ${name}!`;
+  return `Yes! ${a.object}! That's the palace at work, ${name}. Keep walking...`;
 }
 
 export function getNextBeat(current: BeatId, state: ConversationState): BeatId | null {
