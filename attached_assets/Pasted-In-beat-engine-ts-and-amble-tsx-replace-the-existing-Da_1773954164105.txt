@@ -1,0 +1,29 @@
+In beat-engine.ts and amble.tsx, replace the existing Day 1 welcome beat with a new multi-screen onboarding flow for first-time users only. Here is exactly what to build:
+IMPORTANT: All of these new beats must use the existing chat format — typewriter text in Timbuk's chat bubble, continue button at the bottom — exactly like the current welcome beat. Do NOT create static slides or info cards. Everything happens in the chat interface.
+Add these new beats in sequence, only shown when currentDay === 1 and it is the user's first session:
+Beat 1 — 'onboard-welcome':
+Message: 'Ah, [Name]! What a pleasure — I am so happy to meet you. My name is Timbuk and I would be honored to be your guide on this journey. Today we are going to build something really special — your very own Memory Palace — a technique that has been around for thousands of years, and honestly? It is a lot of fun. Shall we get started?'
+Control: A single 'Yes, let us go!' button — not the standard continue button
+Beat 2 — 'onboard-skill':
+Message: 'Fantastic — I was hoping you would say that. Before we begin, one important thing. Memory is not fixed. It is a skill — like playing piano or riding a bike. And like any skill it can be trained and improved. Which is exactly why I am so excited to work with you today. [Name], I have a question. Is there a place you know so well you could walk through it with your eyes closed? Your home, a garden, somewhere you have been a thousand times? Tell me — where shall we walk today?'
+Control: Text input — the user types their place name here
+Important: Save whatever the user types as the palace place name for this session — this replaces the later ask-place beat for Day 1 only
+Beat 3 — 'onboard-palace':
+Message: 'Good. [placeName] — that is your Memory Palace. It already exists. We are just going to furnish it. Scholars, orators and memory champions have been using this technique for over 2,000 years. Here is the secret, [Name]. Your brain is actually quite poor at remembering dry facts — names, lists, numbers. But it is extraordinary at remembering places. Spaces you have walked through a thousand times.'
+Control: Continue button
+Beat 4 — 'onboard-vivid':
+Message: 'The Memory Palace uses exactly that. We take an object — say, a penguin — and place it somewhere in your home. But here is where it gets fun, [Name]. We do not just plop a penguin by your front door. We make it YOURS. Is it enormous — blocking the whole doorway? Is it wearing a bow tie and tap dancing? Is it that same penguin that waddled after you at the zoo when you were eight years old and your mother had to pull you away?'
+Control: Continue button
+Beat 5 — 'onboard-secret':
+Message: 'The more vivid, the more ridiculous, the more personal — the harder your brain works to file it. And the harder it works, the longer it sticks. That is the whole secret right there. And [Name] — there is no failing here. No test. No pressure. This is a skill and the most important thing is practice. The more we walk together the sharper it gets. You can take this skill into your real life — grocery lists, names, appointments, whatever you like. Now hit that magic button and let the Memory-Ambling begin.'
+Control: A button that says 'Let the Memory-Ambling Begin!'
+Beat 6 — 'onboard-ready':
+Message: 'Right then. If you can picture a room in your home, you have already done half the work. I have a hint button if you ever get a little stuck. Ready? Let us find your palace.'
+Control: Continue button — then flow directly into the ask-stop beat since the place name was already captured in Beat 2
+Routing rules:
+- On Day 1 first session: welcome beat routes to onboard-welcome instead of the current welcome message
+- onboard-welcome → onboard-skill → onboard-palace → onboard-vivid → onboard-secret → onboard-ready → ask-stop
+- Skip ask-place entirely on Day 1 since place name was captured in onboard-skill
+- On Day 2+: skip all onboard beats entirely, go straight to the existing welcome beat as before
+- The onboard beats should appear in the Learn phase of the progress bar
+Do not change anything else. Do not touch Days 2-7. Do not touch Smart Timbuk. Do not touch the education slides. Only add these new beats to the Day 1 first-session flow.
