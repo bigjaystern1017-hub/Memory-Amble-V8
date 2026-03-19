@@ -3,7 +3,13 @@ import { motion } from "framer-motion";
 import { User } from "lucide-react";
 import timbukAvatarPath from "@assets/timbuk-avatar_1773957235129.png";
 
-const CHAR_DELAY_MS = 40;
+const CHAR_DELAY_MS = 55;
+
+function charDelay(ch: string): number {
+  if (ch === "?" || ch === "!") return CHAR_DELAY_MS + 250;
+  if (ch === "." || ch === "," || ch === "-") return CHAR_DELAY_MS + 180;
+  return CHAR_DELAY_MS;
+}
 
 interface ChatMessageProps {
   sender: "timbuk" | "gladys";
@@ -38,7 +44,7 @@ function TypewriterText({ text, onDone, fastForward }: { text: string; onDone?: 
 
     const timer = setTimeout(() => {
       setCharIndex((prev) => prev + 1);
-    }, CHAR_DELAY_MS);
+    }, charDelay(text[charIndex]));
 
     return () => clearTimeout(timer);
   }, [charIndex, text.length, onDone, fastForward, text]);
