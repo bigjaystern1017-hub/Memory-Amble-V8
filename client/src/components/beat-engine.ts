@@ -709,15 +709,7 @@ export function getMirrorObjectFallback(state: ConversationState): string {
 }
 
 export function getReactRecallFallback(state: ConversationState): string {
-  const name = state.userName || "friend";
-  const idx = state.stepIndex;
-  const total = state.itemCount;
-  const ri = recallAssignmentIndex(idx, state);
-  const a = state.assignments[ri];
-  if (!a) return "";
-  const isLast = idx === total - 1;
-  if (isLast) return `${a.object} — brilliant finish, ${name}!`;
-  return `Yes! ${a.object}! That's the palace at work, ${name}. Keep walking...`;
+  return "Yes! Keep walking.";
 }
 
 export function getNextBeat(current: BeatId, state: ConversationState): BeatId | null {
