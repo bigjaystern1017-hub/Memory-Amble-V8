@@ -19,6 +19,7 @@ interface ChatMessageProps {
   onTypewriterDone?: () => void;
   fastForward?: boolean;
   onSkipTyping?: () => void;
+  variant?: "wisdom";
 }
 
 function TypewriterText({ text, onDone, fastForward }: { text: string; onDone?: () => void; fastForward?: boolean }) {
@@ -72,8 +73,9 @@ function TypewriterText({ text, onDone, fastForward }: { text: string; onDone?: 
   );
 }
 
-export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDone, fastForward, onSkipTyping }: ChatMessageProps) {
+export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDone, fastForward, onSkipTyping, variant }: ChatMessageProps) {
   const isTimbuk = sender === "timbuk";
+  const isWisdom = variant === "wisdom";
 
   return (
     <motion.div
@@ -92,7 +94,9 @@ export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDo
       <div
         className={`max-w-[85%] md:max-w-[75%] rounded-md px-5 py-4 flex flex-col gap-2 ${
           isTimbuk
-            ? "bg-card border border-border text-card-foreground"
+            ? isWisdom
+              ? "bg-muted/60 border border-border/50 text-muted-foreground"
+              : "bg-card border border-border text-card-foreground"
             : "bg-primary text-primary-foreground"
         }`}
       >
@@ -115,7 +119,7 @@ export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDo
             />
           </div>
         ) : typewriter ? (
-          <div className="flex gap-2 items-start">
+          <div className={`flex gap-2 items-start${isWisdom ? " italic" : ""}`}>
             <TypewriterText text={text} onDone={onTypewriterDone} fastForward={fastForward} />
             {onSkipTyping && (
               <button
@@ -128,7 +132,7 @@ export function ChatMessage({ sender, text, isTyping, typewriter, onTypewriterDo
             )}
           </div>
         ) : (
-          <p className="text-xl md:text-2xl leading-relaxed whitespace-pre-wrap">{text}</p>
+          <p className={`text-xl md:text-2xl leading-relaxed whitespace-pre-wrap${isWisdom ? " italic" : ""}`}>{text}</p>
         )}
       </div>
 

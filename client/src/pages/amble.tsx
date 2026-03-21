@@ -48,6 +48,7 @@ interface Message {
   sender: "timbuk" | "gladys";
   text: string;
   typewriter?: boolean;
+  variant?: "wisdom";
 }
 
 const BURST_PARTICLES: { tx: string; ty: string; color: string; delay: string; size: number }[] = [
@@ -186,6 +187,24 @@ export default function Amble() {
           setIsTyping(false);
           const id = ++msgIdRef.current;
           setMessages((prev) => [...prev, { id, sender: "timbuk", text, typewriter: true }]);
+          setTypewriterBusy(true);
+          typewriterResolveRef.current = resolve;
+          scrollToBottom();
+        }, 500);
+      });
+    },
+    [scrollToBottom]
+  );
+
+  const showWisdomMessage = useCallback(
+    (text: string): Promise<void> => {
+      return new Promise((resolve) => {
+        setIsTyping(true);
+        scrollToBottom();
+        setTimeout(() => {
+          setIsTyping(false);
+          const id = ++msgIdRef.current;
+          setMessages((prev) => [...prev, { id, sender: "timbuk", text, typewriter: true, variant: "wisdom" }]);
           setTypewriterBusy(true);
           typewriterResolveRef.current = resolve;
           scrollToBottom();
@@ -493,7 +512,11 @@ export default function Amble() {
         }
       }
 
-      await showTimbukWithTypewriter(displayText);
+      if (beat === "wisdom-drop") {
+        await showWisdomMessage(displayText);
+      } else {
+        await showTimbukWithTypewriter(displayText);
+      }
 
       if (beat === "graduation-offer") {
         const graduated = { ...currentState, graduated: true };
@@ -589,16 +612,6 @@ export default function Amble() {
       const next = getNextBeat(beat, currentState);
       if (next) {
         let nextState = currentState;
-        if (
-          (beat === "react-stop" && next === "ask-stop") ||
-          (beat === "mirror-object" && next === "place-object") ||
-          (beat === "react-recall" && next === "recall") ||
-          (beat === "react-check-in" && next === "check-in-recall") ||
-          (beat === "cleaning-walkthrough" && next === "cleaning-walkthrough")
-        ) {
-          nextState = { ...currentState, stepIndex: currentState.stepIndex + 1 };
-          updateState(nextState);
-        }
         if (beat === "react-stop" && next === "assigning") {
           nextState = { ...currentState, stepIndex: 0 };
           updateState(nextState);
@@ -620,11 +633,21 @@ export default function Amble() {
           nextState = { ...currentState, stepIndex: 0 };
           updateState(nextState);
         }
+        if (
+          (beat === "react-stop" && next === "ask-stop") ||
+          (beat === "mirror-object" && next === "place-object") ||
+          (beat === "react-recall" && next === "recall") ||
+          (beat === "react-check-in" && next === "check-in-recall") ||
+          (beat === "cleaning-walkthrough" && next === "cleaning-walkthrough")
+        ) {
+          nextState = { ...nextState, stepIndex: nextState.stepIndex + 1 };
+          updateState(nextState);
+        }
         setCurrentBeat(next);
         await advanceBeat(next, nextState);
       }
     },
-    [showTimbukWithTypewriter, addTimbukInstant, scrollToBottom, fetchAssignments, updateState, saveProgressToDB, saveSessionToDB, savePalaceToDB, progressData, doScreenWipe]
+    [showTimbukWithTypewriter, showWisdomMessage, addTimbukInstant, scrollToBottom, fetchAssignments, updateState, saveProgressToDB, saveSessionToDB, savePalaceToDB, progressData, doScreenWipe]
   );
 
   const advanceBeatRef = useRef(advanceBeat);
@@ -920,13 +943,21 @@ export default function Amble() {
       await doScreenWipe();
       setCurrentBeat(next);
       await advanceBeatRef.current(next, s);
+    } else if (beat === "wisdom-drop" && next) {
+      let nextState = { ...s, wisdomDropFired: true };
+      if (next === "recall") {
+        nextState = { ...nextState, stepIndex: nextState.stepIndex + 1 };
+      }
+      updateState(nextState);
+      setCurrentBeat(next);
+      await advanceBeatRef.current(next, nextState);
     } else if (next) {
       setCurrentBeat(next);
       await advanceBeatRef.current(next, s);
     }
 
     processingRef.current = false;
-  }, [currentBeat, doScreenWipe]);
+  }, [currentBeat, doScreenWipe, updateState]);
 
   const handleRetry = useCallback(async () => {
     if (processingRef.current) return;
@@ -1480,6 +1511,7 @@ export default function Amble() {
               onTypewriterDone={msg.id === lastMessageId ? handleTypewriterDone : undefined}
               fastForward={msg.id === lastMessageId && fastForward}
               onSkipTyping={msg.id === lastMessageId && typewriterBusy ? () => setFastForward(true) : undefined}
+              variant={msg.variant}
             />
           ))}
           {isTyping && <ChatMessage sender="timbuk" text="" isTyping />}

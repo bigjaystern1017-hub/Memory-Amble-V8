@@ -39,6 +39,7 @@ export type BeatId =
   | "reverse-intro"
   | "recall"
   | "react-recall"
+  | "wisdom-drop"
   | "palace-wipe"
   | "graduation-offer"
   | "final";
@@ -70,6 +71,7 @@ export interface ConversationState {
   preCleanStops: string[];
   preCleanAssignments: Assignment[];
   practiceScene: string;
+  wisdomDropFired: boolean;
 }
 
 export const SMART_CONFIRM = "__SMART_CONFIRM__";
@@ -113,6 +115,7 @@ export function createFreshState(): ConversationState {
     preCleanStops: [],
     preCleanAssignments: [],
     practiceScene: "",
+    wisdomDropFired: false,
   };
 }
 
@@ -578,6 +581,19 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return `It was ${a.object}. No worries -- keep walking...`;
     }
 
+    case "wisdom-drop": {
+      const wisdoms = [
+        "The stranger the image, the harder your brain works to file it. That is why it sticks.",
+        "A clean palace is ready for anything. That is why we clear it each time.",
+        "Walking it backwards uses a different part of your memory. That is the stretch.",
+        "You are not memorizing. You are placing. There is a difference — and you just felt it.",
+        "This works for anything. Grocery lists, names, numbers, appointments. You are building a skill for life.",
+        "Names stick when you attach them to something you already know. That is the bridge.",
+        "You have walked this palace seven times now. It is yours. No one can take it.",
+      ];
+      return wisdoms[state.dayCount % wisdoms.length] || wisdoms[0];
+    }
+
     case "palace-wipe": {
       return `${name}, before we finish, we need to clear the palace. Over time, if we don't, the images pile up and clutter the space, making it harder to remember new things. So we'll give it a good cleaning today to keep it fresh and ready for whatever comes next.
 
@@ -801,6 +817,13 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
       return "react-recall";
 
     case "react-recall":
+      if (!state.wisdomDropFired && state.correctCount > 0) return "wisdom-drop";
+      if (idx < total - 1) return "recall";
+      if (hasCleaning) return "palace-wipe";
+      if (state.correctCount === total) return "graduation-offer";
+      return "final";
+
+    case "wisdom-drop":
       if (idx < total - 1) return "recall";
       if (hasCleaning) return "palace-wipe";
       if (state.correctCount === total) return "graduation-offer";
@@ -852,7 +875,8 @@ export function beatNeedsContinueButton(beatId: BeatId): boolean {
     || beatId === "cleaning-walkthrough-done"
     || beatId === "practice-done"
     || beatId === "item-preview"
-    || beatId === "palace-buffer";
+    || beatId === "palace-buffer"
+    || beatId === "wisdom-drop";
 }
 
 export function getContinueButtonLabel(beatId: BeatId): string {
@@ -861,6 +885,7 @@ export function getContinueButtonLabel(beatId: BeatId): string {
   if (beatId === "item-preview") return "Ready to place them →";
   if (beatId === "practice-done") return "Let's do it!";
   if (beatId === "palace-buffer") return "I'm ready";
+  if (beatId === "wisdom-drop") return "Continue →";
   return "I'm Ready, Let's Go!";
 }
 
