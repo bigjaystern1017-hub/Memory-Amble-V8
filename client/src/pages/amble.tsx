@@ -878,6 +878,32 @@ export default function Amble() {
             s.lastStops = latestSession.stops;
           }
 
+          if (pd.dayCount > 0 && latestSession && Array.isArray(latestSession.assignments) && latestSession.assignments.length > 0) {
+            try {
+              const openerRes = await authFetch("/api/session-opener", {
+                method: "POST",
+                body: JSON.stringify({
+                  userName: s.userName,
+                  currentDay: pd.dayCount + 1,
+                  yesterdayScore: latestSession.score,
+                  yesterdayTotal: latestSession.totalItems,
+                  yesterdayAssignments: latestSession.assignments.map((a: { stopName: string; object: string }) => ({
+                    stopName: a.stopName || "",
+                    object: a.object || "",
+                    userAssociation: "",
+                  })),
+                  placeName: latestSession.placeName || "",
+                }),
+              });
+              const openerData = await openerRes.json();
+              if (openerData.greeting) {
+                s.sessionOpenerGreeting = openerData.greeting;
+              }
+            } catch {
+              // fall through to normal score-aware welcome
+            }
+          }
+
           updateState(s);
           setPhase("chat");
           setTimeout(() => {

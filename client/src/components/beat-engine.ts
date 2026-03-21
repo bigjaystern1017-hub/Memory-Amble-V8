@@ -72,6 +72,7 @@ export interface ConversationState {
   preCleanAssignments: Assignment[];
   practiceScene: string;
   wisdomDropFired: boolean;
+  sessionOpenerGreeting: string;
 }
 
 export const SMART_CONFIRM = "__SMART_CONFIRM__";
@@ -116,6 +117,7 @@ export function createFreshState(): ConversationState {
     preCleanAssignments: [],
     practiceScene: "",
     wisdomDropFired: false,
+    sessionOpenerGreeting: "",
   };
 }
 
@@ -400,6 +402,10 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return `Right then. If you can picture a room in your home, you have already done half the work. I have a hint button if you ever get a little stuck. Ready? Let us find your palace.`;
 
     case "welcome": {
+      if (state.sessionOpenerGreeting) {
+        return state.sessionOpenerGreeting;
+      }
+
       const ys = state.yesterdayScore;
       const yt = state.yesterdayTotal;
       const isPerfect = yt > 0 && ys === yt;

@@ -88,6 +88,19 @@ const assignItemsSchema = z.object({
   category: z.enum(["objects", "names", "practical"]).default("objects"),
 });
 
+const sessionOpenerSchema = z.object({
+  userName: z.string(),
+  currentDay: z.number(),
+  yesterdayScore: z.number(),
+  yesterdayTotal: z.number(),
+  yesterdayAssignments: z.array(z.object({
+    stopName: z.string(),
+    object: z.string(),
+    userAssociation: z.string().optional().default(""),
+  })),
+  placeName: z.string(),
+});
+
 const sparkSchema = z.object({
   object: z.string(),
   stopName: z.string(),
@@ -240,6 +253,41 @@ export async function registerRoutes(
     
     return s;
   }
+
+  app.post("/api/session-opener", async (req, res) => {
+    try {
+      const parsed = sessionOpenerSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid request" });
+      }
+
+      const { userName, currentDay, yesterdayScore, yesterdayTotal, yesterdayAssignments, placeName } = parsed.data;
+
+      const assignmentLines = yesterdayAssignments
+        .map(a => `- ${a.object} at ${a.stopName}${a.userAssociation ? ` (they imagined: ${a.userAssociation})` : ""}`)
+        .join("\n");
+
+      const systemPrompt = `You are Timbuk, a warm wise memory coach. Write a single sentence greeting for a returning user — maximum 15 words. Reference ONE specific thing from their previous session — a stop name, an object, or their personal association. Make it feel like you genuinely remember them. Be warm, slightly playful, specific. Never generic. Examples: Yesterday you had Jimi Hendrix at your front door — I wonder if he is still there. That pineapple luau from last time — your front door has never been the same. Do not use the words brilliant, perfect, wonderful, lovely.`;
+
+      const userMessage = `${userName} is returning for Day ${currentDay}. Yesterday they scored ${yesterdayScore} out of ${yesterdayTotal} at ${placeName}. Previous session placements:\n${assignmentLines}\n\nWrite their personalised greeting now.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        temperature: 1.1,
+        max_tokens: 60,
+      });
+
+      const greeting = response.choices[0]?.message?.content?.trim() || "";
+      res.json({ greeting });
+    } catch (error) {
+      console.error("Error generating session opener:", error);
+      res.status(500).json({ error: "Could not generate greeting." });
+    }
+  });
 
   app.post("/api/smart-confirm", async (req, res) => {
     try {
