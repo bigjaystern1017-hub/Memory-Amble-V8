@@ -129,6 +129,12 @@ export function createFreshState(): ConversationState {
 function firstCap(s: string): string {
   const t = s.trim();
   if (!t) return t;
+  if (t.toLowerCase().startsWith("my ")) {
+    return "Your " + t.slice(3);
+  }
+  if (t.toLowerCase().startsWith("your ")) {
+    return "Your " + t.slice(5);
+  }
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
