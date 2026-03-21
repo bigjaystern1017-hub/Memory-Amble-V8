@@ -1738,6 +1738,38 @@ export default function Amble() {
         >
           Dev: Skip to Day 2
         </button>
+        <button
+          onClick={async () => {
+            const testStops = ["Front door", "Hat rack", "Key bowl"];
+            const testAssignments = [
+              { stopName: "Front door", object: "accordion" },
+              { stopName: "Hat rack", object: "penguin" },
+              { stopName: "Key bowl", object: "cactus" },
+            ];
+            const s = createFreshState();
+            s.userName = "Gladys";
+            s.placeName = "Your house";
+            s.stops = testStops;
+            s.assignments = testAssignments;
+            s.userScenes = ["its on fire", "wearing a top hat", "spinning"];
+            s.itemCount = 3;
+            s.stepIndex = 0;
+            s.lessonConfig = getLessonConfig(3, 0, "objects");
+            s.dayCount = 0;
+            localStorage.setItem("memoryamble_education_seen", "true");
+            updateState(s);
+            setMessages([]);
+            setCurrentBeat("walkthrough-intro");
+            setPhase("chat");
+            setTimeout(() => {
+              advanceBeatRef.current("walkthrough-intro", s);
+            }, 200);
+          }}
+          className="px-2 py-1 text-xs text-muted-foreground/50 hover:text-muted-foreground bg-transparent cursor-pointer"
+          data-testid="button-dev-skip-to-recall"
+        >
+          Dev: Skip to Recall
+        </button>
       </div>
     </div>
   );
