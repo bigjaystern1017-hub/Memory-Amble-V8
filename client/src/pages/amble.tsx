@@ -473,26 +473,13 @@ export default function Amble() {
           } catch {
             displayText = fallback;
           }
-        } else {
-          const fallback = beat === "mirror-object"
-            ? getMirrorObjectFallback(currentState)
-            : getReactRecallFallback(currentState);
+        } else if (beat === "mirror-object") {
+          const fallback = getMirrorObjectFallback(currentState);
           try {
-            let objectName = "";
-            let userAssociation = "";
-            let stopName = "";
-            if (beat === "mirror-object") {
-              const a = currentState.assignments[currentState.stepIndex];
-              objectName = a?.object || "";
-              userAssociation = currentState.userScenes[currentState.stepIndex] || "";
-              stopName = a?.stopName || "";
-            } else {
-              const ri = recallAssignmentIndex(currentState.stepIndex, currentState);
-              const a = currentState.assignments[ri];
-              objectName = a?.object || "";
-              userAssociation = currentState.userAnswers[currentState.stepIndex] || "";
-              stopName = a?.stopName || "";
-            }
+            const a = currentState.assignments[currentState.stepIndex];
+            const objectName = a?.object || "";
+            const userAssociation = currentState.userScenes[currentState.stepIndex] || "";
+            const stopName = a?.stopName || "";
             const resp = await fetch("/api/smart-confirm", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -502,6 +489,28 @@ export default function Amble() {
                 userAssociation,
                 stopName,
                 context: "object-placement",
+              }),
+            });
+            const data = await resp.json();
+            displayText = data.confirmation || fallback;
+          } catch {
+            displayText = fallback;
+          }
+        } else if (beat === "react-recall") {
+          const fallback = getReactRecallFallback(currentState);
+          try {
+            const ri = recallAssignmentIndex(currentState.stepIndex, currentState);
+            const a = currentState.assignments[ri];
+            const userAssociation = currentState.userAnswers[currentState.stepIndex] || "";
+            const stopName = a?.stopName || "";
+            const resp = await fetch("/api/smart-confirm", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userName: currentState.userName,
+                userAssociation,
+                stopName,
+                context: "recall-confirmation",
               }),
             });
             const data = await resp.json();
