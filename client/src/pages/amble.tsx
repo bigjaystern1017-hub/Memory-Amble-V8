@@ -501,15 +501,15 @@ export default function Amble() {
           try {
             const ri = recallAssignmentIndex(currentState.stepIndex, currentState);
             const a = currentState.assignments[ri];
-            const userAssociation = currentState.userAnswers[currentState.stepIndex] || "";
-            const stopName = a?.stopName || "";
             const resp = await fetch("/api/smart-confirm", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 userName: currentState.userName,
-                userAssociation,
-                stopName,
+                objectName: a?.object || "",
+                userAssociation: currentState.userAnswers[currentState.stepIndex] || "",
+                originalScene: currentState.userScenes[ri] || "",
+                stopName: a?.stopName || "",
                 context: "recall-confirmation",
               }),
             });
