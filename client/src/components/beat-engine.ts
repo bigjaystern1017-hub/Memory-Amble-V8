@@ -482,7 +482,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       if (idx === total - 1) {
         return `Almost there. As you continue through your ${place.toLowerCase().replace(/^your\s+/i, '')}, where do you end up? What is your last stop?`;
       }
-      return `Past ${stopInContext(state.stops[idx - 1] || "")}. What do you notice next?`;
+      return `What do you notice next?`;
     }
 
     case "react-stop":
