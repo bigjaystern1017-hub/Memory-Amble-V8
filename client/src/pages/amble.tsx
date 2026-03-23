@@ -437,7 +437,7 @@ export default function Amble() {
               body: JSON.stringify({
                 userName: currentState.userName,
                 userAssociation,
-                context: "stop-confirmation",
+                context: isLast ? "stop-confirmation" : "stop-transition",
               }),
             });
             const data = await resp.json();

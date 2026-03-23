@@ -113,7 +113,7 @@ const smartConfirmSchema = z.object({
   userAssociation: z.string(),
   originalScene: z.string().optional().default(""),
   stopName: z.string().optional().default(""),
-  context: z.enum(["object-placement", "stop-confirmation", "place-confirmation", "recall-confirmation"]).default("object-placement"),
+  context: z.enum(["object-placement", "stop-confirmation", "stop-transition", "place-confirmation", "recall-confirmation"]).default("object-placement"),
 });
 
 const savePalaceSchema = z.object({
@@ -312,6 +312,9 @@ export async function registerRoutes(
         userMessage = `${userName} chose their palace location: "${userAssociation}". Respond now.`;
       } else if (isStopConfirmation) {
         systemPrompt = `You are Timbuk, a warm memory coach. The user just named a stop in their memory palace. Respond in 5 words or fewer. Be warm. Sound like a friend. Never analyze what their choice means or reveals about them. Never comment on the emotional significance. Just acknowledge it simply and move on. Examples: front door → Perfect. Right where it all begins. key bowl → Good. Right by the door. where our dog eats → That one is unforgettable. kitchen → Central command. hat rack → Something you pass every day. Never use: reveals, suggests, symbolizes, reflects, anchors, signifies, meaningful, handy, love, warmth, cherished, cozy, practical, playful, spirit, belonging.`;
+        userMessage = `${userName} named their stop: "${userAssociation}". Respond now.`;
+      } else if (context === "stop-transition") {
+        systemPrompt = `You are Timbuk, a warm memory coach walking with the user through their memory palace. The user named a stop. Work it naturally into a short walking acknowledgment of 6 words or fewer. Fix any typos or awkward phrasing naturally without drawing attention to them. Never prepend your or the blindly — use whatever sounds natural for the stop name. Examples: front door → Past your front door. where our kids put their boots → Past the boot spot. were kids put boos → Past the kids boot spot. kitchen → Past the kitchen. Never use: reveals, suggests, symbolizes, reflects, brilliant, wonderful, lovely.`;
         userMessage = `${userName} named their stop: "${userAssociation}". Respond now.`;
       } else if (context === "recall-confirmation") {
         systemPrompt = `You are Timbuk, a warm memory coach. The user just recalled what they placed at a stop. You know the vivid scene they originally created. Respond in 8 words or fewer. Reference their original scene specifically — not the object name. Sound like you genuinely saw it too. Be warm and delighted. Never philosophical. Never analyze what their choice reveals about them. Never use these words: reveals, suggests, symbolizes, reflects, anchors, playful, spirit, belonging, meaning, brilliant, perfect, wonderful, lovely, fantastic, amazing, great job, nailed it, impressive.`;
