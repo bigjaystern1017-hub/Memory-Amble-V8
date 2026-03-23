@@ -287,6 +287,14 @@ function placeVerb(category: "objects" | "names" | "practical"): string {
   return category === "names" ? "imagine meeting" : "place";
 }
 
+function stopInContext(stop: string): string {
+  const s = stop.trim().toLowerCase();
+  if (s.startsWith('where ') || s.startsWith('the place') || s.startsWith('spot')) {
+    return 'the ' + s;
+  }
+  return 'your ' + s;
+}
+
 export function getTimbukMessage(beatId: BeatId, state: ConversationState): string {
   const name = state.userName || "friend";
   const place = firstCap(state.placeName);
@@ -472,10 +480,10 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
         return `You are at the entrance of your ${place.toLowerCase().replace(/^your\s+/i, '')}. What is the first thing that catches your eye? That is your first stop.`;
       }
       if (idx === total - 1) {
-        const prevStops = state.stops.slice(0, idx).map((s) => 'your ' + s.toLowerCase()).join(", ");
+        const prevStops = state.stops.slice(0, idx).map((s) => stopInContext(s)).join(", ");
         return `You're past ${prevStops} now. As you continue through your ${place.toLowerCase().replace(/^your\s+/i, '')}, where do you end up? What's your last stop?`;
       }
-      return `Past your ${(state.stops[idx - 1] || "").toLowerCase()}. What do you notice next?`;
+      return `Past ${stopInContext(state.stops[idx - 1] || "")}. What do you notice next?`;
     }
 
     case "react-stop":
@@ -489,14 +497,14 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
 
     case "practice-item": {
       const firstStop = firstCap(state.stops[0] || "your first stop");
-      return `${firstStop} — 🍍 Pineapple. Now make it YOURS — what is happening with that Pineapple at your ${(state.stops[0] || "first stop").toLowerCase()}?`;
+      return `${firstStop} — 🍍 Pineapple. Now make it YOURS — what is happening with that Pineapple at ${stopInContext(state.stops[0] || "first stop")}?`;
     }
 
     case "react-practice":
       return SMART_CONFIRM;
 
     case "practice-buffer":
-      return `Good. Now let us see if it stuck. Close your eyes for a moment. Picture your ${(state.stops[0] || "front door").toLowerCase()}.`;
+      return `Good. Now let us see if it stuck. Close your eyes for a moment. Picture ${stopInContext(state.stops[0] || "front door")}.`;
 
     case "practice-recall":
       return `${firstCap(state.stops[0] || "Front door")}. What do you see there?`;
@@ -537,7 +545,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       if (!a) return "";
       const stopLabel = firstCap(a.stopName);
       const emoji = getItemEmoji(a.object);
-      const prompt = `Now make it YOURS — what is happening with that ${a.object} at your ${a.stopName.toLowerCase()}?`;
+      const prompt = `Now make it YOURS — what is happening with that ${a.object} at ${stopInContext(a.stopName)}?`;
       if (isNames) {
         if (idx === total - 1) {
           return `Last one. ${stopLabel} — 👤 ${a.object}. ${prompt}`;
