@@ -472,7 +472,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
         return `You are at the entrance of your ${place.toLowerCase().replace(/^your\s+/i, '')}. What is the first thing that catches your eye? That is your first stop.`;
       }
       if (idx === total - 1) {
-        const prevStops = state.stops.slice(0, idx).map((s) => firstCap(s)).join(", ");
+        const prevStops = state.stops.slice(0, idx).map((s) => 'your ' + s.toLowerCase()).join(", ");
         return `You're past ${prevStops} now. As you continue through your ${place.toLowerCase().replace(/^your\s+/i, '')}, where do you end up? What's your last stop?`;
       }
       return `Past your ${(state.stops[idx - 1] || "").toLowerCase()}. What do you notice next?`;
