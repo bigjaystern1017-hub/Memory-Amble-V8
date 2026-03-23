@@ -113,7 +113,7 @@ const smartConfirmSchema = z.object({
   userAssociation: z.string(),
   originalScene: z.string().optional().default(""),
   stopName: z.string().optional().default(""),
-  context: z.enum(["object-placement", "stop-confirmation", "stop-transition", "place-confirmation", "recall-confirmation"]).default("object-placement"),
+  context: z.enum(["object-placement", "stop-confirmation", "stop-transition", "stop-display", "place-confirmation", "recall-confirmation"]).default("object-placement"),
 });
 
 const savePalaceSchema = z.object({
@@ -316,6 +316,9 @@ export async function registerRoutes(
       } else if (context === "stop-transition") {
         systemPrompt = `You are Timbuk, a warm memory coach walking with the user through their memory palace. The user named a stop. Work it naturally into a short walking acknowledgment of 6 words or fewer. Fix any typos or awkward phrasing naturally without drawing attention to them. Never prepend your or the blindly — use whatever sounds natural for the stop name. Examples: front door → Past your front door. where our kids put their boots → Past the boot spot. were kids put boos → Past the kids boot spot. kitchen → Past the kitchen. Never use: reveals, suggests, symbolizes, reflects, brilliant, wonderful, lovely.`;
         userMessage = `${userName} named their stop: "${userAssociation}". Respond now.`;
+      } else if (context === "stop-display") {
+        systemPrompt = `You are a grammar assistant. Given a stop name from a memory palace, return ONLY the natural way to reference it mid-sentence — with correct article. Examples: front door → your front door. our weird red door → our weird red door. where kids put boots → the spot where the kids put their boots. where my husband throws his jacket → where your husband throws his jacket. Return only the phrase, nothing else, no punctuation.`;
+        userMessage = `Stop name: "${userAssociation}". Return the natural mid-sentence reference now.`;
       } else if (context === "recall-confirmation") {
         systemPrompt = `You are Timbuk, a warm memory coach. The user just recalled what they placed at a stop. You know the vivid scene they originally created. Respond in 8 words or fewer. Reference their original scene specifically — not the object name. Sound like you genuinely saw it too. Be warm and delighted. Never philosophical. Never analyze what their choice reveals about them. Never use these words: reveals, suggests, symbolizes, reflects, anchors, playful, spirit, belonging, meaning, brilliant, perfect, wonderful, lovely, fantastic, amazing, great job, nailed it, impressive.`;
         userMessage = `The object was: ${objectName}. Their original scene was: ${originalScene}. They recalled: ${userAssociation} at ${stopName}. Respond now.`;

@@ -26,6 +26,7 @@ import {
   getReactStopRouteAppend,
   getReactPlaceFallback,
   getReactPlaceStopIntro,
+  stopPhrase,
 } from "@/components/beat-engine";
 import {
   getLessonConfig,
@@ -65,6 +66,13 @@ const BURST_PARTICLES: { tx: string; ty: string; color: string; delay: string; s
   { tx: "60px",    ty: "104px",  color: "#f59e0b", delay: "50ms", size: 12 },
   { tx: "104px",   ty: "60px",   color: "#fbbf24", delay: "20ms", size: 8  },
 ];
+
+function getStopNameForBeat(beat: BeatId, state: ConversationState): string {
+  if (beat === "place-object") {
+    return state.assignments[state.stepIndex]?.stopName || "";
+  }
+  return state.stops[0] || "";
+}
 
 function cleanPlaceName(input: string): string {
   let s = input.trim();
@@ -391,9 +399,27 @@ export default function Amble() {
         return;
       }
 
-      let displayText = text;
-      if (text === SMART_CONFIRM) {
-        console.log("SMART_CONFIRM block entered for beat:", beat, "text value:", text, "SMART_CONFIRM sentinel:", SMART_CONFIRM);
+      let resolvedText = text;
+      if (text.includes('__STOP__')) {
+        const rawStop = getStopNameForBeat(beat, currentState);
+        if (rawStop) {
+          try {
+            const resp = await fetch('/api/smart-confirm', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userName: currentState.userName, userAssociation: rawStop, context: 'stop-display' }),
+            });
+            const data = await resp.json();
+            resolvedText = text.replace('__STOP__', data.confirmation || stopPhrase(rawStop));
+          } catch {
+            resolvedText = text.replace('__STOP__', stopPhrase(rawStop));
+          }
+        }
+      }
+
+      let displayText = resolvedText;
+      if (resolvedText === SMART_CONFIRM) {
+        console.log("SMART_CONFIRM block entered for beat:", beat, "text value:", resolvedText, "SMART_CONFIRM sentinel:", SMART_CONFIRM);
         setIsTyping(true);
         scrollToBottom();
 

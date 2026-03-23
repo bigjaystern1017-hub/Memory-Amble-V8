@@ -295,7 +295,7 @@ function stopInContext(stop: string): string {
   return 'your ' + s;
 }
 
-function stopPhrase(stop: string): string {
+export function stopPhrase(stop: string): string {
   const s = stop.trim();
   const lower = s.toLowerCase();
   if (lower.startsWith('where ') || lower.startsWith('when ') || lower.startsWith('the spot') || lower.startsWith('the place')) {
@@ -508,14 +508,14 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
 
     case "practice-item": {
       const firstStop = firstCap(state.stops[0] || "your first stop");
-      return `${firstStop} — 🍍 Pineapple. Now make it YOURS — what is happening with that Pineapple at ${stopPhrase(state.stops[0] || "first stop")}?`;
+      return `${firstStop} — 🍍 Pineapple. Now make it YOURS — what is happening with that Pineapple at __STOP__?`;
     }
 
     case "react-practice":
       return SMART_CONFIRM;
 
     case "practice-buffer":
-      return `Good. Now let us see if it stuck. Close your eyes for a moment. Picture ${stopPhrase(state.stops[0] || "front door")}.`;
+      return `Good. Now let us see if it stuck. Close your eyes for a moment. Picture __STOP__.`;
 
     case "practice-recall":
       return `${firstCap(state.stops[0] || "Front door")}. What do you see there?`;
@@ -556,7 +556,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       if (!a) return "";
       const stopLabel = firstCap(a.stopName);
       const emoji = getItemEmoji(a.object);
-      const prompt = `Now make it YOURS — what is happening with that ${a.object} at ${stopPhrase(a.stopName)}?`;
+      const prompt = `Now make it YOURS — what is happening with that ${a.object} at __STOP__?`;
       if (isNames) {
         if (idx === total - 1) {
           return `Last one. ${stopLabel} — 👤 ${a.object}. ${prompt}`;
