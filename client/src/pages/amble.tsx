@@ -559,7 +559,7 @@ export default function Amble() {
         const stopLines = currentState.stops
           .map((s, i) => `${ordinal(i + 1)}, "${s}"`)
           .join('.\n');
-        const placeName = currentState.placeName.toLowerCase().replace(/^your\s+/i, '');
+        const placeName = yourify(currentState.placeName).toLowerCase().replace(/^your\s+/i, '');
         displayText = `So here's your route through your ${placeName}:\n\n${stopLines}.\n\nThat, ${currentState.userName}, is the skeleton of your Memory Palace. Now let me find some items to put in it...`;
       }
 
