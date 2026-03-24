@@ -1829,6 +1829,44 @@ export default function Amble() {
         >
           Dev: Skip to Recall
         </button>
+        <button
+          onClick={async () => {
+            const palace = ["Front door", "Kitchen", "Living room"];
+            const yesterdayAssignments = [
+              { stopName: "Front door", object: "penguin" },
+              { stopName: "Kitchen", object: "typewriter" },
+              { stopName: "Living room", object: "crown" },
+            ];
+            const s = createFreshState();
+            s.userName = 'Gladys';
+            s.placeName = 'Your house';
+            s.stops = palace;
+            s.isReturningUser = true;
+            s.dayCount = 1;
+            s.itemCount = 3;
+            s.lessonConfig = getLessonConfig(3, 1, 'objects');
+            s.checkInAssignments = yesterdayAssignments;
+            s.checkInPlace = 'Your house';
+            s.yesterdayScore = 3;
+            s.yesterdayTotal = 3;
+            s.lastPalaceName = 'Your house';
+            s.lastStops = palace;
+            s.preCleanAssignments = yesterdayAssignments;
+            s.preCleanStops = palace;
+            localStorage.setItem('memoryamble_education_seen', 'true');
+            updateState(s);
+            setMessages([]);
+            setPhase('chat');
+            setTimeout(() => {
+              setCurrentBeat('check-in-intro');
+              advanceBeatRef.current('check-in-intro', s);
+            }, 200);
+          }}
+          className="px-2 py-1 text-xs text-muted-foreground/50 hover:text-muted-foreground bg-transparent cursor-pointer"
+          data-testid="button-dev-real-day2"
+        >
+          Dev: Real Day 2
+        </button>
       </div>
       {showPenguin && (
         <div className="fixed bottom-16 left-0 z-[9999] pointer-events-none penguin-waddle">
