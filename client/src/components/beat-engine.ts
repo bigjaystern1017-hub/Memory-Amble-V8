@@ -307,7 +307,7 @@ export function stopPhrase(stop: string): string {
   return 'your ' + lower;
 }
 
-function yourify(s: string): string {
+export function yourify(s: string): string {
   return s
     .replace(/\bour\b/gi, 'your')
     .replace(/\bmy\b/gi, 'your')
@@ -497,10 +497,10 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
 
     case "ask-stop": {
       if (idx === 0) {
-        return `You are at the entrance of your ${place.toLowerCase().replace(/^your\s+/i, '')}. What is the first thing that catches your eye? That is your first stop.`;
+        return `You are at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. What is the first thing that catches your eye? That is your first stop.`;
       }
       if (idx === total - 1) {
-        return `Almost there. As you continue through your ${place.toLowerCase().replace(/^your\s+/i, '')}, where do you end up? What is your last stop?`;
+        return `Almost there. As you continue through your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}, where do you end up? What is your last stop?`;
       }
       return `What do you notice next?`;
     }
@@ -581,11 +581,11 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return SMART_CONFIRM;
 
     case "palace-buffer": {
-      return `Good. All ${total} planted, ${name}. Take a breath. Picture your ${place.toLowerCase().replace(/^your\s+/i, '')}.`;
+      return `Good. All ${total} planted, ${name}. Take a breath. Picture your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}.`;
     }
 
     case "walkthrough-intro": {
-      return `Close your eyes. You are back at the entrance of your ${place.toLowerCase().replace(/^your\s+/i, '')}. Just walk — whatever you placed will be waiting.`;
+      return `Close your eyes. You are back at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. Just walk — whatever you placed will be waiting.`;
     }
 
     case "reverse-intro": {
@@ -644,7 +644,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     case "palace-wipe": {
       return `${name}, before we finish, we need to clear the palace. Over time, if we don't, the images pile up and clutter the space, making it harder to remember new things. So we'll give it a good cleaning today to keep it fresh and ready for whatever comes next.
 
-Now, close your eyes and picture yourself at the entrance of ${place.toLowerCase().replace(/^your\s+/i, '')}. Imagine a gentle breeze blowing through the whole place. As it passes each stop, the images float away like leaves. Take a slow breath. The palace is clean -- ready for new memories whenever you need it.`;
+Now, close your eyes and picture yourself at the entrance of ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. Imagine a gentle breeze blowing through the whole place. As it passes each stop, the images float away like leaves. Take a slow breath. The palace is clean -- ready for new memories whenever you need it.`;
     }
 
     case "graduation-offer": {

@@ -27,6 +27,7 @@ import {
   getReactPlaceFallback,
   getReactPlaceStopIntro,
   stopPhrase,
+  yourify,
 } from "@/components/beat-engine";
 import {
   getLessonConfig,
@@ -415,9 +416,11 @@ export default function Amble() {
               body: JSON.stringify({ userName: currentState.userName, userAssociation: rawStop, context: 'stop-display' }),
             });
             const data = await resp.json();
-            resolvedText = text.replace('__STOP__', data.confirmation || stopPhrase(rawStop));
+            const phrase = yourify(data.confirmation || stopPhrase(rawStop));
+            resolvedText = text.replace('__STOP__', phrase);
           } catch {
-            resolvedText = text.replace('__STOP__', stopPhrase(rawStop));
+            const fallbackPhrase = yourify(stopPhrase(rawStop));
+            resolvedText = text.replace('__STOP__', fallbackPhrase);
           }
         }
       }
