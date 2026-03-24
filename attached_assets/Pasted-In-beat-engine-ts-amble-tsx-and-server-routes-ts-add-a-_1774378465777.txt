@@ -1,0 +1,77 @@
+In beat-engine.ts, amble.tsx, and server/routes.ts, add a Day 2 expansion opt-in flow. Here is exactly what to build:
+1. In beat-engine.ts:
+Add these new BeatIds to the BeatId type union:
+'expansion-offer' | 'expansion-stop-1' | 'expansion-stop-2' | 'expansion-intro' | 'expansion-preview'
+Add these cases to getTimbukMessage:
+typescriptcase 'expansion-offer': {
+  const count = state.correctCount;
+  const total = state.itemCount;
+  if (count >= total * 0.66) {
+    return `${count} out of ${total} — your palace is alive, ${name}. Want to push it further today? Two more stops, two more items. Or call that a win.`;
+  }
+  return `You know what — let's try two more. Different stops, fresh start. Sometimes the second round clicks. Want to give it a go?`;
+}
+
+case 'expansion-stop-1': {
+  const lastStop = state.stops[state.stops.length - 1] || 'your last stop';
+  return `Two more stops. After your ${lastStop.toLowerCase()}?`;
+}
+
+case 'expansion-stop-2':
+  return `Good. And then?`;
+
+case 'expansion-intro': {
+  const newStops = state.stops.slice(state.itemCount);
+  const s1 = newStops[0] || '';
+  const s2 = newStops[1] || '';
+  const a1 = state.assignments[state.itemCount];
+  const a2 = state.assignments[state.itemCount + 1];
+  if (!a1 || !a2) return '';
+  const e1 = getItemEmoji(a1.object);
+  const e2 = getItemEmoji(a2.object);
+  return `${yourify(firstCap(s1))} — ${e1} ${a1.object}. Make it yours.\n\n${yourify(firstCap(s2))} — ${e2} ${a2.object}. Make it yours.`;
+}
+
+case 'expansion-preview': {
+  const newAssignments = state.assignments.slice(state.itemCount);
+  const lines = newAssignments.map(a => `${getItemEmoji(a.object)} ${a.object}`).join('\n\n');
+  return `Two new items:\n\n${lines}`;
+}
+Add beatNeedsUserInput entries for expansion-stop-1 and expansion-stop-2.
+Add beatNeedsContinueButton entry for expansion-offer — BUT this beat uses TWO buttons not one. Add a flag for this.
+Add to getNextBeat:
+typescriptcase 'expansion-offer':
+  return 'expansion-stop-1'; // only if user clicked Let's push it — handled in amble.tsx
+
+case 'expansion-stop-1':
+  return 'expansion-stop-2';
+
+case 'expansion-stop-2':
+  return 'expansion-preview';
+
+case 'expansion-preview':
+  return 'place-object'; // stepIndex will be at itemCount
+
+case 'expansion-intro':
+  return 'palace-buffer';
+Update the react-recall and wisdom-drop cases in getNextBeat — when idx === total - 1 and state.dayCount === 1 and !state.expansionOffered, route to expansion-offer instead of palace-wipe or final.
+Add expansionOffered: boolean and expansionAccepted: boolean to ConversationState interface and createFreshState.
+2. In amble.tsx:
+Add handling for expansion-offer beat — show TWO buttons instead of the normal continue button:
+
+"Let's push it!" — sets expansionAccepted: true, advances to expansion-stop-1, also fetches 2 more assignments by calling /api/assign-objects with the 2 new stops and appending them to state.assignments
+"That's a win!" — sets expansionAccepted: false, advances directly to palace-wipe or final as normal
+
+Add handling for expansion-stop-1 and expansion-stop-2 user input — append the new stop to state.stops exactly like ask-stop does, using cleanStopName.
+When expansion is accepted and 2 new stops are entered, fetch 2 new assignments for those stops and append to existing assignments. Update state.itemCount to state.itemCount + 2 so recall walks all 5 stops.
+After expansion placement, the recall phase should walk ALL stops in order — the original 3 plus the 2 new ones. The existing recall loop handles this automatically since it uses state.itemCount.
+For scoring — store the base score separately. Add baseCorrectCount: number to state, set it when expansion-offer fires. Day 3 welcome message uses baseCorrectCount not correctCount for score-aware messaging.
+3. In server/routes.ts:
+The existing /api/assign-objects endpoint already handles this — no changes needed. It accepts any number of stops and returns assignments.
+4. In beat-engine.ts Day 3 welcome message:
+Update the Day 3 welcome to acknowledge palace growth if state.stops.length > 3:
+typescriptconst palaceNote = state.stops.length > 3 
+  ? `Your palace grew yesterday — all ${state.stops.length} stops are waiting. ` 
+  : '';
+Prepend palaceNote to each Day 3 variant.
+Do not change Day 1 flow. Do not change any existing beats. Do not break guest users. Compile cleanly

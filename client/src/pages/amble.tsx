@@ -1048,6 +1048,12 @@ export default function Amble() {
       updateState(nextState);
       setCurrentBeat(next);
       await advanceBeatRef.current(next, nextState);
+    } else if (beat === "expansion-preview" && next) {
+      const originalItemCount = s.itemCount;
+      const nextState = { ...s, itemCount: s.itemCount + 2, stepIndex: originalItemCount };
+      updateState(nextState);
+      setCurrentBeat(next);
+      await advanceBeatRef.current(next, nextState);
     } else if (next) {
       setCurrentBeat(next);
       await advanceBeatRef.current(next, s);
@@ -1055,6 +1061,32 @@ export default function Amble() {
 
     processingRef.current = false;
   }, [currentBeat, doScreenWipe, updateState]);
+
+  const handleExpansionAccept = useCallback(async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setShowContinue(false);
+    const s = stateRef.current;
+    const nextState = { ...s, expansionOffered: true, expansionAccepted: true, baseCorrectCount: s.correctCount };
+    updateState(nextState);
+    setCurrentBeat("expansion-stop-1");
+    await advanceBeatRef.current("expansion-stop-1", nextState);
+    processingRef.current = false;
+  }, [updateState]);
+
+  const handleExpansionDecline = useCallback(async () => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setShowContinue(false);
+    const s = stateRef.current;
+    const nextState = { ...s, expansionOffered: true, expansionAccepted: false };
+    updateState(nextState);
+    const hasCleaning = s.lessonConfig?.cleaning === true;
+    const next: BeatId = hasCleaning ? "palace-wipe" : s.correctCount === s.itemCount ? "graduation-offer" : "final";
+    setCurrentBeat(next);
+    await advanceBeatRef.current(next, nextState);
+    processingRef.current = false;
+  }, [updateState]);
 
   const handleRetry = useCallback(async () => {
     if (processingRef.current) return;
@@ -1188,6 +1220,30 @@ export default function Amble() {
         case "ask-stop":
           s = { ...s, stops: [...s.stops, cleanStopName(text)] };
           break;
+
+        case "expansion-stop-1":
+          s = { ...s, stops: [...s.stops, cleanStopName(text)] };
+          break;
+
+        case "expansion-stop-2": {
+          const newStop2 = cleanStopName(text);
+          const newStop1 = s.stops[s.stops.length - 1];
+          const allStops = [...s.stops, newStop2];
+          s = { ...s, stops: allStops };
+          try {
+            const response = await authFetch("/api/assign-objects", {
+              method: "POST",
+              body: JSON.stringify({ stops: [newStop1, newStop2], category: s.category }),
+            });
+            const data = await response.json();
+            if (data.assignments?.length) {
+              s = { ...s, assignments: [...s.assignments, ...data.assignments] };
+            }
+          } catch {
+            // expansion fetch failed; proceed without new assignments
+          }
+          break;
+        }
 
         case "practice-item": {
           s = { ...s, practiceScene: text };
@@ -1678,6 +1734,24 @@ export default function Amble() {
                 data-testid="button-retry"
               >
                 Try Again
+              </Button>
+            </div>
+          ) : showContinue && currentBeat === "expansion-offer" ? (
+            <div className="flex gap-3 justify-center">
+              <Button
+                size="lg"
+                onClick={handleExpansionAccept}
+                data-testid="button-expansion-accept"
+              >
+                Let's push it!
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={handleExpansionDecline}
+                data-testid="button-expansion-decline"
+              >
+                That's a win!
               </Button>
             </div>
           ) : showContinue ? (

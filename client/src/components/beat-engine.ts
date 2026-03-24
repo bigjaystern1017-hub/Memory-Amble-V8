@@ -45,7 +45,12 @@ export type BeatId =
   | "wisdom-drop"
   | "palace-wipe"
   | "graduation-offer"
-  | "final";
+  | "final"
+  | "expansion-offer"
+  | "expansion-stop-1"
+  | "expansion-stop-2"
+  | "expansion-intro"
+  | "expansion-preview";
 
 export interface ConversationState {
   userName: string;
@@ -77,6 +82,9 @@ export interface ConversationState {
   practiceRecallAnswer: string;
   wisdomDropFired: boolean;
   sessionOpenerGreeting: string;
+  expansionOffered: boolean;
+  expansionAccepted: boolean;
+  baseCorrectCount: number;
 }
 
 export const SMART_CONFIRM = "__SMART_CONFIRM__";
@@ -123,6 +131,9 @@ export function createFreshState(): ConversationState {
     practiceRecallAnswer: "",
     wisdomDropFired: false,
     sessionOpenerGreeting: "",
+    expansionOffered: false,
+    expansionAccepted: false,
+    baseCorrectCount: 0,
   };
 }
 
@@ -450,9 +461,12 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
         return `Welcome back, ${name} — and well done for coming back. That is the most important thing. Yesterday was your very first memory palace ever built. The fact that you are here today means the technique is already working on you. Today we go again, and I promise it gets easier. Let us build something together.`;
       }
       if (dayNum === 3) {
-        if (isPerfect) return `${name}! Welcome back — and a warm huzzah for everything you have accomplished! Three days in and I am genuinely impressed. You remembered every single one yesterday. You built your palace, expanded it, and cleaned it like a pro. I hope you are noticing little improvements out there in your daily life — because I am certainly seeing them in here. Today we try something new that is going to stretch your memory in a brilliant new direction. Trust me on this one.`;
-        if (isGood) return `${name}! Welcome back — and a warm huzzah for everything you have accomplished! Three days in and you are doing beautifully. Yesterday you got ${ys} out of ${yt} — and every single attempt is strengthening your palace. I hope you are noticing little improvements out there in your daily life. Today we try something new that is going to stretch your memory in a brilliant direction. Trust me on this one.`;
-        return `${name}! Welcome back — and a warm huzzah just for showing up three days in a row. That takes real commitment. Memory palace is a skill — it grows with repetition, not perfection. I promise you, something is clicking in there even when it does not feel like it. Today we try something new. Stay with me.`;
+        const palaceNote = state.stops.length > 3
+          ? `Your palace grew yesterday — all ${state.stops.length} stops are waiting. `
+          : '';
+        if (isPerfect) return `${palaceNote}${name}! Welcome back — and a warm huzzah for everything you have accomplished! Three days in and I am genuinely impressed. You remembered every single one yesterday. You built your palace, expanded it, and cleaned it like a pro. I hope you are noticing little improvements out there in your daily life — because I am certainly seeing them in here. Today we try something new that is going to stretch your memory in a brilliant new direction. Trust me on this one.`;
+        if (isGood) return `${palaceNote}${name}! Welcome back — and a warm huzzah for everything you have accomplished! Three days in and you are doing beautifully. Yesterday you got ${ys} out of ${yt} — and every single attempt is strengthening your palace. I hope you are noticing little improvements out there in your daily life. Today we try something new that is going to stretch your memory in a brilliant direction. Trust me on this one.`;
+        return `${palaceNote}${name}! Welcome back — and a warm huzzah just for showing up three days in a row. That takes real commitment. Memory palace is a skill — it grows with repetition, not perfection. I promise you, something is clicking in there even when it does not feel like it. Today we try something new. Stay with me.`;
       }
       if (dayNum === 4) {
         if (isPerfect) return `Welcome back, ${name}! Look at you — four days and a perfect score yesterday. Do you know how rare that is? Your memory palace is becoming second nature. Today we stretch to eight stops. A bigger palace. Your mind has been training for exactly this — I promise you are ready.`;
@@ -670,6 +684,41 @@ Now, close your eyes and picture yourself at the entrance of ${yourify(place).to
       return `${name}, what you just did took courage. You built a palace at ${place.toLowerCase()} and walked through it. The pictures will get clearer.\n\nTonight, try walking through it in your mind. Each time, they'll stick a little more.${dayNote}`;
     }
 
+    case "expansion-offer": {
+      const count = state.correctCount;
+      const total = state.itemCount;
+      if (count >= total * 0.66) {
+        return `${count} out of ${total} — your palace is alive, ${name}. Want to push it further today? Two more stops, two more items. Or call that a win.`;
+      }
+      return `You know what — let's try two more. Different stops, fresh start. Sometimes the second round clicks. Want to give it a go?`;
+    }
+
+    case "expansion-stop-1": {
+      const lastStop = state.stops[state.stops.length - 1] || 'your last stop';
+      return `Two more stops. After your ${lastStop.toLowerCase()}?`;
+    }
+
+    case "expansion-stop-2":
+      return `Good. And then?`;
+
+    case "expansion-intro": {
+      const newStops = state.stops.slice(state.itemCount);
+      const s1 = newStops[0] || '';
+      const s2 = newStops[1] || '';
+      const a1 = state.assignments[state.itemCount];
+      const a2 = state.assignments[state.itemCount + 1];
+      if (!a1 || !a2) return '';
+      const e1 = getItemEmoji(a1.object);
+      const e2 = getItemEmoji(a2.object);
+      return `${yourify(firstCap(s1))} — ${e1} ${a1.object}. Make it yours.\n\n${yourify(firstCap(s2))} — ${e2} ${a2.object}. Make it yours.`;
+    }
+
+    case "expansion-preview": {
+      const newAssignments = state.assignments.slice(state.itemCount);
+      const lines = newAssignments.map(a => `${getItemEmoji(a.object)} ${a.object}`).join('\n\n');
+      return `Two new items:\n\n${lines}`;
+    }
+
     default:
       return "";
   }
@@ -860,15 +909,32 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
     case "react-recall":
       if (idx === total - 1 && !state.wisdomDropFired && state.correctCount > 0) return "wisdom-drop";
       if (idx < total - 1) return "recall";
+      if (idx === total - 1 && state.dayCount === 1 && !state.expansionOffered) return "expansion-offer";
       if (hasCleaning) return "palace-wipe";
       if (state.correctCount === total) return "graduation-offer";
       return "final";
 
     case "wisdom-drop":
       if (idx < total - 1) return "recall";
+      if (state.dayCount === 1 && !state.expansionOffered) return "expansion-offer";
       if (hasCleaning) return "palace-wipe";
       if (state.correctCount === total) return "graduation-offer";
       return "final";
+
+    case "expansion-offer":
+      return "expansion-stop-1";
+
+    case "expansion-stop-1":
+      return "expansion-stop-2";
+
+    case "expansion-stop-2":
+      return "expansion-preview";
+
+    case "expansion-preview":
+      return "place-object";
+
+    case "expansion-intro":
+      return "palace-buffer";
 
     case "palace-wipe":
       if (state.correctCount === total) return "graduation-offer";
@@ -897,6 +963,8 @@ export function beatNeedsUserInput(beatId: BeatId): boolean {
     "check-in-recall",
     "cleaning-recall",
     "onboard-skill",
+    "expansion-stop-1",
+    "expansion-stop-2",
   ].includes(beatId);
 }
 
@@ -920,7 +988,9 @@ export function beatNeedsContinueButton(beatId: BeatId): boolean {
     || beatId === "practice-done"
     || beatId === "item-preview"
     || beatId === "palace-buffer"
-    || beatId === "wisdom-drop";
+    || beatId === "wisdom-drop"
+    || beatId === "expansion-offer"
+    || beatId === "expansion-preview";
 }
 
 export function getContinueButtonLabel(beatId: BeatId): string {
@@ -969,6 +1039,9 @@ export function getInputPlaceholder(beatId: BeatId, state: ConversationState): s
       return "What was at this stop?";
     case "cleaning-recall":
       return "What fades away?";
+    case "expansion-stop-1":
+    case "expansion-stop-2":
+      return "Name the stop...";
     default:
       return "Type your answer...";
   }
