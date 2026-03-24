@@ -515,7 +515,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return `Before we place your real items — let me show you exactly how this works. I will give you one practice item. Just tell me the first thing that comes to mind when you picture it at your first stop.`;
 
     case "practice-item": {
-      const firstStop = firstCap(state.stops[0] || "your first stop");
+      const firstStop = yourify(firstCap(state.stops[0] || "your first stop"));
       return `${firstStop} — 🍍 Pineapple. Now make it YOURS — what is happening with that Pineapple at __STOP__?`;
     }
 
