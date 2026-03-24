@@ -112,17 +112,12 @@ export default function Amble() {
   const isGuest = !isAuthenticated;
 
   const fuzzyMatch = (userAnswer: string, correctObject: string): boolean => {
-    const cleanAnswer = userAnswer
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "")
-      .replace(/[^\w]/g, "");
-    const cleanCorrect = correctObject
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "")
-      .replace(/[^\w]/g, "");
-    return cleanAnswer.includes(cleanCorrect) || cleanCorrect.includes(cleanAnswer);
+    const normalize = (s: string) => s.toLowerCase().trim()
+      .replace(/[^\w\s]/g, '')
+      .replace(/\s+/g, '');
+    const a = normalize(userAnswer);
+    const c = normalize(correctObject);
+    return a.includes(c) || c.includes(a);
   };
 
   const [phase, setPhase] = useState<"loading" | "education" | "name" | "chat" | "results" | "paywall">("loading");
