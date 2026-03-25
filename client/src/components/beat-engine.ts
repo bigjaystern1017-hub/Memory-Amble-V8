@@ -665,7 +665,8 @@ Now, close your eyes and picture yourself at the entrance of your ${yourify(plac
     }
 
     case "final": {
-      const count = state.correctCount;
+      const count = Math.min(state.correctCount, state.itemCount);
+      const total = state.itemCount;
       const graduated = state.graduated;
       const levelNote = graduated
         ? `\n\nYou've levelled up! Next session: ${Math.min(total + 2, 9)} ${itemLabel(cat)}.`
@@ -907,6 +908,7 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
       return "react-recall";
 
     case "react-recall":
+      console.log(`react-recall: idx=${idx}, total=${total}, correctCount=${state.correctCount}`);
       if (idx === total - 1 && state.dayCount === 1 && !state.expansionOffered) return "expansion-offer";
       if (idx === total - 1 && !state.wisdomDropFired && state.correctCount > 0) return "wisdom-drop";
       if (idx < total - 1) return "recall";

@@ -1288,7 +1288,7 @@ export default function Amble() {
           const ri = recallAssignmentIndex(idx, s);
           const assoc = s.assignments[ri];
           let addCorrect = 0;
-          if (assoc) {
+          if (idx < s.itemCount && assoc) {
             const keyword = assoc.object
               .replace(/^a\s+/i, "")
               .replace(/^an\s+/i, "")
