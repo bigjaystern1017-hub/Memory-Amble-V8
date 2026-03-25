@@ -233,8 +233,9 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-border/50 py-8 px-4 text-center text-sm text-muted-foreground">
+      <footer className="border-t border-border/50 py-8 px-4 text-center text-sm text-muted-foreground space-y-2">
         <p>© 2025 MemoryAmble. Built with care for those who deserve a sharper mind.</p>
+        <p>Questions? <a href="mailto:brightermindlabs@outlook.com" className="text-primary hover:underline">brightermindlabs@outlook.com</a></p>
       </footer>
     </div>
   );
