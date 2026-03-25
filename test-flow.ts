@@ -156,6 +156,57 @@ day2State.assignments = [
 ];
 runFlow('DAY 2 - Returning User', day2State, 'check-in-intro');
 
+// DAY 3 SCENARIO
+const day3State = createFreshState();
+day3State.userName = 'Gladys';
+day3State.dayCount = 2;
+day3State.itemCount = 3;
+day3State.isReturningUser = true;
+day3State.placeName = 'Your house';
+day3State.stops = ['Front door', 'Kitchen', 'Living room'];
+day3State.lessonConfig = getLessonConfig(3, 2, 'objects');
+day3State.checkInAssignments = [
+  { stopName: 'Front door', object: 'accordion' },
+  { stopName: 'Kitchen', object: 'cactus' },
+  { stopName: 'Living room', object: 'trophy' },
+];
+day3State.checkInPlace = 'Your house';
+day3State.yesterdayScore = 3;
+day3State.yesterdayTotal = 3;
+day3State.assignments = [
+  { stopName: 'Front door', object: 'penguin' },
+  { stopName: 'Kitchen', object: 'typewriter' },
+  { stopName: 'Living room', object: 'crown' },
+];
+runFlow('DAY 3 - Reverse Recall', day3State, 'check-in-intro');
+
+// DAY 5 SCENARIO
+const day5State = createFreshState();
+day5State.userName = 'Gladys';
+day5State.dayCount = 4;
+day5State.itemCount = 5;
+day5State.isReturningUser = true;
+day5State.placeName = 'Your house';
+day5State.stops = ['Front door', 'Kitchen', 'Living room', 'Bedroom', 'Bathroom'];
+day5State.lessonConfig = getLessonConfig(5, 4, 'practical');
+day5State.category = 'practical';
+day5State.checkInAssignments = [
+  { stopName: 'Front door', object: 'penguin' },
+  { stopName: 'Kitchen', object: 'typewriter' },
+  { stopName: 'Living room', object: 'crown' },
+];
+day5State.checkInPlace = 'Your house';
+day5State.yesterdayScore = 4;
+day5State.yesterdayTotal = 5;
+day5State.assignments = [
+  { stopName: 'Front door', object: 'milk' },
+  { stopName: 'Kitchen', object: 'bread' },
+  { stopName: 'Living room', object: 'eggs' },
+  { stopName: 'Bedroom', object: 'dentist appointment' },
+  { stopName: 'Bathroom', object: 'take vitamins' },
+];
+runFlow('DAY 5 - Practical Items', day5State, 'check-in-intro');
+
 console.log('\n' + '='.repeat(60));
 console.log('TEST COMPLETE');
 console.log('='.repeat(60));
