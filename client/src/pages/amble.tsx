@@ -1091,8 +1091,13 @@ export default function Amble() {
       await advanceBeatRef.current(next, s);
     } else if ((beat === "practice-success" || beat === "practice-done" || beat === "item-preview" || beat === "palace-buffer") && next) {
       await doScreenWipe();
+      let nextState = s;
+      if (beat === "palace-buffer" && next === "walkthrough-intro") {
+        nextState = { ...s, stepIndex: 0 };
+        updateState(nextState);
+      }
       setCurrentBeat(next);
-      await advanceBeatRef.current(next, s);
+      await advanceBeatRef.current(next, nextState);
     } else if (beat === "wisdom-drop" && next) {
       let nextState = { ...s, wisdomDropFired: true };
       if (next === "recall") {
