@@ -1873,6 +1873,19 @@ export default function Amble() {
           🐧
         </div>
       )}
+      {window.location.hostname.includes('replit.dev') && (
+        <div className="fixed bottom-2 right-2 z-[9999]">
+          <button
+            onClick={() => {
+              localStorage.clear();
+              window.location.reload();
+            }}
+            className="px-2 py-1 text-xs text-muted-foreground/50 hover:text-muted-foreground bg-transparent cursor-pointer"
+          >
+            Dev Reset
+          </button>
+        </div>
+      )}
     </div>
   );
 }
