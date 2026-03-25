@@ -111,6 +111,21 @@ export default function Amble() {
 
   const isGuest = !isAuthenticated;
 
+  function levenshtein(a: string, b: string): number {
+    const m = a.length, n = b.length;
+    const dp: number[][] = Array.from({length: m + 1}, (_, i) => 
+      Array.from({length: n + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0)
+    );
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        dp[i][j] = a[i-1] === b[j-1] 
+          ? dp[i-1][j-1] 
+          : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+      }
+    }
+    return dp[m][n];
+  }
+
   const fuzzyMatch = (userAnswer: string, correctObject: string): boolean => {
     const normalize = (s: string) => s.toLowerCase()
       .replace(/[^\w]/g, '')
@@ -135,6 +150,18 @@ export default function Amble() {
       if (correctWords.some(cw => cw.includes(word) || word.includes(cw))) {
         return true;
       }
+    }
+
+    // Spelling tolerance — allow up to 2 character differences
+    // for words longer than 5 chars, 1 for shorter words
+    const normalA = normalize(userAnswer);
+    const normalC = normalize(correctObject);
+    const maxDist = normalC.length > 5 ? 2 : 1;
+    if (levenshtein(normalA, normalC) <= maxDist) return true;
+
+    // Also check each significant word against the correct object
+    for (const word of answerWords) {
+      if (word.length > 4 && levenshtein(word, normalC) <= 2) return true;
     }
 
     return false;
