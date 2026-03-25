@@ -1,0 +1,54 @@
+Add Day 6 and Day 7 scenarios to test-flow.ts and run them:
+typescriptconst day6State = createFreshState();
+day6State.userName = 'Gladys';
+day6State.dayCount = 5;
+day6State.itemCount = 5;
+day6State.isReturningUser = true;
+day6State.placeName = 'Your house';
+day6State.stops = ['Front door', 'Kitchen', 'Living room', 'Bedroom', 'Bathroom'];
+day6State.lessonConfig = getLessonConfig(5, 5, 'names');
+day6State.category = 'names';
+day6State.checkInAssignments = [
+  { stopName: 'Front door', object: 'milk' },
+  { stopName: 'Kitchen', object: 'bread' },
+  { stopName: 'Living room', object: 'eggs' },
+];
+day6State.checkInPlace = 'Your house';
+day6State.yesterdayScore = 4;
+day6State.yesterdayTotal = 5;
+day6State.assignments = [
+  { stopName: 'Front door', object: 'Margaret' },
+  { stopName: 'Kitchen', object: 'Frederick' },
+  { stopName: 'Living room', object: 'Dorothy' },
+  { stopName: 'Bedroom', object: 'Winston' },
+  { stopName: 'Bathroom', object: 'Beatrice' },
+];
+runFlow('DAY 6 - Names', day6State, 'check-in-intro');
+
+const day7State = createFreshState();
+day7State.userName = 'Gladys';
+day7State.dayCount = 6;
+day7State.itemCount = 7;
+day7State.isReturningUser = true;
+day7State.placeName = 'Your house';
+day7State.stops = ['Front door', 'Kitchen', 'Living room', 'Bedroom', 'Bathroom', 'Hallway', 'Garden'];
+day7State.lessonConfig = getLessonConfig(7, 6, 'objects');
+day7State.checkInAssignments = [
+  { stopName: 'Front door', object: 'Margaret' },
+  { stopName: 'Kitchen', object: 'Frederick' },
+  { stopName: 'Living room', object: 'Dorothy' },
+];
+day7State.checkInPlace = 'Your house';
+day7State.yesterdayScore = 5;
+day7State.yesterdayTotal = 5;
+day7State.assignments = [
+  { stopName: 'Front door', object: 'penguin' },
+  { stopName: 'Kitchen', object: 'typewriter' },
+  { stopName: 'Living room', object: 'crown' },
+  { stopName: 'Bedroom', object: 'accordion' },
+  { stopName: 'Bathroom', object: 'cactus' },
+  { stopName: 'Hallway', object: 'trophy' },
+  { stopName: 'Garden', object: 'canoe' },
+];
+runFlow('DAY 7 - Graduation', day7State, 'check-in-intro');
+Show me the complete raw output
