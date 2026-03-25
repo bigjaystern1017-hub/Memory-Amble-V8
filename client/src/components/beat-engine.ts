@@ -333,6 +333,8 @@ function practicalItemPhrase(item: string): string {
       lower.startsWith('doctor')) {
     return lower;
   }
+  const massNouns = ['milk', 'bread', 'water', 'rice', 'flour', 'sugar', 'butter', 'coffee', 'tea'];
+  if (massNouns.includes(lower)) return 'some ' + lower;
   if (lower.endsWith('s') && !lower.endsWith('ss')) {
     return 'some ' + lower;
   }
@@ -597,7 +599,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       const isLast = idx === total - 1;
       const prefix = isLast ? `Last one. ${stopLabel}` : stopLabel;
       if (isNames) {
-        return `${prefix} — 👤 ${a.object}. Now make it YOURS — picture meeting ${a.object} here. What do you notice about them?`;
+        return `${prefix} — 👤 ${a.object}. Now make it YOURS — picture meeting ${a.object} here. What do you notice about this person?`;
       }
       if (cat === 'practical') {
         return `${prefix} — ${emoji} ${a.object}. Now make it YOURS — how are you going to remember ${practicalItemPhrase(a.object)}?`;
@@ -962,6 +964,7 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
       return "final";
 
     case "graduation-offer":
+      if (state.dayCount === 6) return null;
       return "final";
 
     case "final":
