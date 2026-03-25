@@ -656,7 +656,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     case "palace-wipe": {
       return `${name}, before we finish, we need to clear the palace. Over time, if we don't, the images pile up and clutter the space, making it harder to remember new things. So we'll give it a good cleaning today to keep it fresh and ready for whatever comes next.
 
-Now, close your eyes and picture yourself at the entrance of ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. Imagine a gentle breeze blowing through the whole place. As it passes each stop, the images float away like leaves. Take a slow breath. The palace is clean -- ready for new memories whenever you need it.`;
+Now, close your eyes and picture yourself at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. Imagine a gentle breeze blowing through the whole place. As it passes each stop, the images float away like leaves. Take a slow breath. The palace is clean -- ready for new memories whenever you need it.`;
     }
 
     case "graduation-offer": {
@@ -907,16 +907,16 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
       return "react-recall";
 
     case "react-recall":
+      if (idx === total - 1 && state.dayCount === 1 && !state.expansionOffered) return "expansion-offer";
       if (idx === total - 1 && !state.wisdomDropFired && state.correctCount > 0) return "wisdom-drop";
       if (idx < total - 1) return "recall";
-      if (idx === total - 1 && state.dayCount === 1 && !state.expansionOffered) return "expansion-offer";
       if (hasCleaning) return "palace-wipe";
       if (state.correctCount === total) return "graduation-offer";
       return "final";
 
     case "wisdom-drop":
-      if (idx < total - 1) return "recall";
       if (state.dayCount === 1 && !state.expansionOffered) return "expansion-offer";
+      if (idx < total - 1) return "recall";
       if (hasCleaning) return "palace-wipe";
       if (state.correctCount === total) return "graduation-offer";
       return "final";

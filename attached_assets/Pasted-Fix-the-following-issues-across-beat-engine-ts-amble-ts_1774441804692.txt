@@ -1,0 +1,68 @@
+Fix the following issues across beat-engine.ts, amble.tsx, and server/routes.ts:
+1. In amble.tsx, fix fuzzy match to handle compound words and partial matches:
+Replace the existing fuzzyMatch function with:
+typescriptconst fuzzyMatch = (userAnswer: string, correctObject: string): boolean => {
+  const normalize = (s: string) => s.toLowerCase()
+    .replace(/[^\w]/g, '')
+    .trim();
+  
+  const a = normalize(userAnswer);
+  const c = normalize(correctObject);
+  
+  // Exact match after normalization
+  if (a === c) return true;
+  
+  // One contains the other
+  if (a.includes(c) || c.includes(a)) return true;
+  
+  // Check significant words
+  const stopWords = new Set(['a', 'the', 'an', 'of', 'and', 'or', 'is', 'in', 'at', 'to', 'for']);
+  const getWords = (s: string) => s.toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length > 1 && !stopWords.has(w));
+  
+  const answerWords = getWords(userAnswer);
+  const correctWords = getWords(correctObject);
+  
+  // Any significant word from answer appears in correct or vice versa
+  for (const word of answerWords) {
+    if (correctWords.some(cw => cw.includes(word) || word.includes(cw))) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+This handles: "weather vane" → "weathervane", "fish" → "goldfish", "birdbath" → "bird bath", "wheel barrow" → "wheelbarrow".
+2. In beat-engine.ts, fix wisdom drop timing:
+In getNextBeat, find the react-recall case. Currently it routes to wisdom-drop before checking for expansion-offer. Fix the order so it checks expansion first:
+typescriptcase 'react-recall':
+  if (idx === total - 1 && state.dayCount === 1 && !state.expansionOffered) {
+    return 'expansion-offer';
+  }
+  if (idx === total - 1 && !state.wisdomDropFired && state.correctCount > 0) {
+    return 'wisdom-drop';
+  }
+  if (idx < total - 1) return 'recall';
+  if (hasCleaning) return 'palace-wipe';
+  if (state.correctCount === total) return 'graduation-offer';
+  return 'final';
+Also fix wisdom-drop case to check for expansion:
+typescriptcase 'wisdom-drop':
+  if (state.dayCount === 1 && !state.expansionOffered) {
+    return 'expansion-offer';
+  }
+  if (idx < total - 1) return 'recall';
+  if (hasCleaning) return 'palace-wipe';
+  if (state.correctCount === total) return 'graduation-offer';
+  return 'final';
+3. In beat-engine.ts, fix "entrance of house" missing "your":
+Find every instance of 'entrance of your ' + place.toLowerCase().replace(/^your\s+/i, '') and make sure the replace is stripping correctly. Also find walkthrough-intro and ask-stop first beat and confirm they read 'entrance of your ' + yourify(place).toLowerCase().replace(/^your\s+/i, '').
+4. In server/routes.ts, tighten banned words in object-placement and recall-confirmation prompts:
+Find the object-placement system prompt. Add these words to the banned list: 'delightful, wonderful, fantastic, amazing, great job, nailed it, impressive, charming, whimsical, intriguing.'
+Find the recall-confirmation system prompt. Add the same banned words.
+Replace with more specific instruction: 'React to the specific image they described. Sound like a real person who just heard something vivid and unexpected. Short, warm, specific. Never generic.'
+5. In beat-engine.ts, fix expansion-stop-1 to use yourify on the last stop name:
+Find the expansion-stop-1 case. Make sure the last stop reference uses yourify(lastStop.toLowerCase()) not just lastStop.toLowerCase().
+Do not change scoring logic, beat routing beyond what is specified, or any guest user functionality. Compile cleanly.

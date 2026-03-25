@@ -112,12 +112,32 @@ export default function Amble() {
   const isGuest = !isAuthenticated;
 
   const fuzzyMatch = (userAnswer: string, correctObject: string): boolean => {
-    const normalize = (s: string) => s.toLowerCase().trim()
-      .replace(/[^\w\s]/g, '')
-      .replace(/\s+/g, '');
+    const normalize = (s: string) => s.toLowerCase()
+      .replace(/[^\w]/g, '')
+      .trim();
+
     const a = normalize(userAnswer);
     const c = normalize(correctObject);
-    return a.includes(c) || c.includes(a);
+
+    if (a === c) return true;
+    if (a.includes(c) || c.includes(a)) return true;
+
+    const stopWords = new Set(['a', 'the', 'an', 'of', 'and', 'or', 'is', 'in', 'at', 'to', 'for']);
+    const getWords = (s: string) => s.toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .split(/\s+/)
+      .filter(w => w.length > 1 && !stopWords.has(w));
+
+    const answerWords = getWords(userAnswer);
+    const correctWords = getWords(correctObject);
+
+    for (const word of answerWords) {
+      if (correctWords.some(cw => cw.includes(word) || word.includes(cw))) {
+        return true;
+      }
+    }
+
+    return false;
   };
 
   const [phase, setPhase] = useState<"loading" | "education" | "name" | "chat" | "results" | "paywall">("loading");
