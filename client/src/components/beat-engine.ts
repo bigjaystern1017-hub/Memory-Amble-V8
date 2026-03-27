@@ -939,10 +939,9 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
 
     case "react-recall":
       console.log(`react-recall: idx=${idx}, total=${total}, correctCount=${state.correctCount}`);
-      if (idx === total - 1 && !state.wisdomDropFired && state.correctCount > 0) return "wisdom-drop";
-      if (idx === total - 1 && state.dayCount === 1 && !state.expansionOffered) return "expansion-offer";
-      if (idx === total - 1 && !state.wisdomDropFired) return "wisdom-drop";
       if (idx < total - 1) return "recall";
+      if (!state.wisdomDropFired && state.correctCount > 0) return "wisdom-drop";
+      if (state.dayCount === 1 && !state.expansionOffered) return "expansion-offer";
       if (hasCleaning) return "palace-wipe";
       if (state.correctCount === total) return "graduation-offer";
       return "final";
