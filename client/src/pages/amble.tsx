@@ -675,15 +675,9 @@ export default function Amble() {
         await savePalaceToDB(currentState.stops);
         await saveProgressToDB(newProgress);
         
-        const displayCount = currentState.expansionAccepted && currentState.baseCorrectCount !== undefined && currentState.baseItemCount !== undefined
-          ? Math.min(currentState.baseCorrectCount, currentState.baseItemCount)
-          : Math.min(currentState.correctCount, currentState.itemCount);
-        const displayTotal = currentState.expansionAccepted && currentState.baseItemCount !== undefined
-          ? currentState.baseItemCount
-          : currentState.itemCount;
         setResultsSummary({
-          correctCount: displayCount,
-          totalItems: displayTotal,
+          correctCount: Math.min(currentState.correctCount, currentState.itemCount),
+          totalItems: currentState.itemCount,
           streak: newProgress.streak,
           justCompletedDay: progressData.dayCount + 1,
         });

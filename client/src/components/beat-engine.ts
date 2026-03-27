@@ -688,14 +688,8 @@ Now, close your eyes and picture yourself at the entrance of your ${yourify(plac
     }
 
     case "final": {
-      const baseCount = state.expansionAccepted && state.baseCorrectCount !== undefined && state.baseItemCount !== undefined
-        ? Math.min(state.baseCorrectCount, state.baseItemCount)
-        : Math.min(state.correctCount, state.itemCount);
-      const baseTotal = state.expansionAccepted && state.baseItemCount !== undefined
-        ? state.baseItemCount
-        : state.itemCount;
-      const count = baseCount;
-      const total = baseTotal;
+      const count = Math.min(state.correctCount, state.itemCount);
+      const total = state.itemCount;
       const graduated = state.graduated;
       const levelNote = graduated
         ? `\n\nYou've levelled up! Next session: ${Math.min(total + 2, 9)} ${itemLabel(cat)}.`
