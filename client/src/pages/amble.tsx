@@ -1354,6 +1354,7 @@ export default function Amble() {
               .replace(/^an\s+/i, "")
               .replace(/^the\s+/i, "")
               .toLowerCase();
+            console.log('FUZZY DEBUG:', JSON.stringify(text), JSON.stringify(keyword), fuzzyMatch(text, keyword));
             if (fuzzyMatch(text, keyword)) addCorrect = 1;
           }
           // Don't increment correctCount during expansion recall phase
