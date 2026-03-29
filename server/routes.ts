@@ -139,6 +139,7 @@ const saveSessionSchema = z.object({
   assignments: z.array(z.object({ stopName: z.string(), object: z.string() })),
   placeName: z.string(),
   stops: z.array(z.string()),
+  userScenes: z.array(z.string()).optional(),
 });
 
 export async function registerRoutes(
@@ -555,7 +556,7 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Invalid request" });
       }
 
-      const { date, level, category, score, totalItems, assignments, placeName, stops } = parsed.data;
+      const { date, level, category, score, totalItems, assignments, placeName, stops, userScenes } = parsed.data;
 
       const [created] = await db
         .insert(sessionHistory)
@@ -569,6 +570,7 @@ export async function registerRoutes(
           assignmentsJson: JSON.stringify(assignments),
           placeName,
           stopsJson: JSON.stringify(stops),
+          userScenesJson: JSON.stringify(userScenes || []),
         })
         .returning();
 

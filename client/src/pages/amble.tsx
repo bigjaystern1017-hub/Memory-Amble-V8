@@ -387,6 +387,7 @@ export default function Amble() {
           assignments: s.assignments,
           placeName: s.placeName,
           stops: s.stops,
+          userScenes: s.userScenes,
         }),
       });
     } catch (e) {

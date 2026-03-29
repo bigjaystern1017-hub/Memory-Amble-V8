@@ -33,6 +33,7 @@ export const sessionHistory = pgTable("session_history", {
   assignmentsJson: text("assignments_json").notNull(),
   placeName: varchar("place_name", { length: 255 }).notNull(),
   stopsJson: text("stops_json").notNull(),
+  userScenesJson: text("user_scenes_json").notNull().default("[]"),
 });
 
 export const assignmentSchema = z.object({
