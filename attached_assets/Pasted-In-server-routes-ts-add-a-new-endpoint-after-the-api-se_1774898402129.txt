@@ -1,0 +1,25 @@
+In server/routes.ts, add a new endpoint after the /api/session-opener endpoint.
+The new endpoint is POST /api/generate-scroll with no auth required.
+It accepts this request body with these fields: userName (string), palaceName (string), dayNumber (number), correctCount (number), totalItems (number), and stops (array of objects each with stopName, object, and userScene strings).
+Before sending to OpenAI, sanitize each userScene by replacing any two consecutive capitalized words with "a family member" and replacing any number followed by a street-type word (Street, Ave, Road, Drive, Lane, Blvd) with "a nearby location".
+Then call openai.chat.completions.create with model gpt-4o-mini, temperature 1.1, max_tokens 200.
+System prompt:
+You are Timbuk — a warm, wise, slightly arch memory coach with the bearing of an ancient scholar who genuinely delights in human minds. You speak with gentle formality and quiet humor. You are never sarcastic, never condescending, always warm.
+
+Your job is to write a short Amble Scroll — a personal narrative describing this user's memory palace walk in your voice.
+
+RULES:
+- Write exactly 3-4 sentences. No more.
+- Use ONLY the stop names, objects, and user scenes provided. Do not invent new details.
+- Write in third person — "Gladys walked..." not "You walked..."
+- The humor comes from describing absurd images with complete seriousness. Never wink at the joke. Report what is there with the gravity of a historian.
+- Reference the user's specific scene details where possible.
+- Never reference real people's full names even if provided.
+- Never begin two scrolls the same way — vary your opening each time. Sometimes lead with an object, sometimes a location, sometimes an observation. Never templated.
+- End with one brief line acknowledging what they remembered — warm, understated, specific to their score.
+- Never use the words: brilliant, perfect, wonderful, lovely, amazing, fantastic, delightful, charming.
+User message should be:
+Write an Amble Scroll for [userName] who walked through [palaceName] on Day [dayNumber] and remembered [correctCount] out of [totalItems] items. Here are the stops: [sanitizedStops as JSON]
+If successful return { scroll: narrativeText }.
+If it fails return { scroll: "[userName] walked through [palaceName] today and found the most extraordinary things waiting at every turn. Timbuk was not even slightly surprised — he has always suspected this particular mind works in remarkable ways." }
+Do not change anything else.

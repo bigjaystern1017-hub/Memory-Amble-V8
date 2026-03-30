@@ -101,6 +101,19 @@ const sessionOpenerSchema = z.object({
   placeName: z.string(),
 });
 
+const generateScrollSchema = z.object({
+  userName: z.string(),
+  palaceName: z.string(),
+  dayNumber: z.number(),
+  correctCount: z.number(),
+  totalItems: z.number(),
+  stops: z.array(z.object({
+    stopName: z.string(),
+    object: z.string(),
+    userScene: z.string(),
+  })),
+});
+
 const sparkSchema = z.object({
   object: z.string(),
   stopName: z.string(),
@@ -320,6 +333,65 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error generating session opener:", error);
       res.status(500).json({ error: "Could not generate greeting." });
+    }
+  });
+
+  app.post("/api/generate-scroll", async (req, res) => {
+    const parsed = generateScrollSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Invalid request" });
+    }
+
+    const { userName, palaceName, dayNumber, correctCount, totalItems, stops } = parsed.data;
+
+    function sanitizeScene(scene: string): string {
+      let s = scene;
+      s = s.replace(/\b([A-Z][a-z]+)\s+([A-Z][a-z]+)\b/g, "a family member");
+      s = s.replace(/\b\d+\s+(Street|Ave|Avenue|Road|Drive|Lane|Blvd|Boulevard)\b/gi, "a nearby location");
+      return s;
+    }
+
+    const sanitizedStops = stops.map(stop => ({
+      stopName: stop.stopName,
+      object: stop.object,
+      userScene: sanitizeScene(stop.userScene),
+    }));
+
+    const fallback = `${userName} walked through ${palaceName} today and found the most extraordinary things waiting at every turn. Timbuk was not even slightly surprised — he has always suspected this particular mind works in remarkable ways.`;
+
+    try {
+      const systemPrompt = `You are Timbuk — a warm, wise, slightly arch memory coach with the bearing of an ancient scholar who genuinely delights in human minds. You speak with gentle formality and quiet humor. You are never sarcastic, never condescending, always warm.
+
+Your job is to write a short Amble Scroll — a personal narrative describing this user's memory palace walk in your voice.
+
+RULES:
+- Write exactly 3-4 sentences. No more.
+- Use ONLY the stop names, objects, and user scenes provided. Do not invent new details.
+- Write in third person — "Gladys walked..." not "You walked..."
+- The humor comes from describing absurd images with complete seriousness. Never wink at the joke. Report what is there with the gravity of a historian.
+- Reference the user's specific scene details where possible.
+- Never reference real people's full names even if provided.
+- Never begin two scrolls the same way — vary your opening each time. Sometimes lead with an object, sometimes a location, sometimes an observation. Never templated.
+- End with one brief line acknowledging what they remembered — warm, understated, specific to their score.
+- Never use the words: brilliant, perfect, wonderful, lovely, amazing, fantastic, delightful, charming.`;
+
+      const userMessage = `Write an Amble Scroll for ${userName} who walked through ${palaceName} on Day ${dayNumber} and remembered ${correctCount} out of ${totalItems} items. Here are the stops: ${JSON.stringify(sanitizedStops)}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        temperature: 1.1,
+        max_tokens: 200,
+      });
+
+      const scroll = response.choices[0]?.message?.content?.trim() || fallback;
+      res.json({ scroll });
+    } catch (error) {
+      console.error("Error generating scroll:", error);
+      res.json({ scroll: fallback });
     }
   });
 
