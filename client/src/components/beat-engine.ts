@@ -455,7 +455,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     }
 
     case "onboard-welcome":
-      return `Ah, ${name}! What a pleasure — I am so happy to meet you. I am Timbuk and I would be honored to be your guide on this journey. Today we are going to build something really special — your very own Memory Palace — a technique that has been around for thousands of years, and honestly? It is a lot of fun. Shall we get started?`;
+      return `Ah, ${name}! What a pleasure — I am so happy to meet you. I am Timbuk and I would be honored to be your guide on this journey. Today we are going to build something really special — your very own Memory Palace — a technique that has been around for thousands of years, and honestly? It is a lot of fun. Shall we get started? Oh — and I have a small surprise waiting for you at the end.`;
 
     case "onboard-skill":
       return `Fantastic — I was hoping you would say that. Before we begin, one important thing. Memory is not fixed. It is a skill — like playing piano or riding a bike. And like any skill it can be trained and improved. Which is exactly why I am so excited to work with you today. ${name}, I have a question. Is there a place you know so well you could walk through it with your eyes closed? Your home, a garden, somewhere you have been a thousand times? Tell me — where shall we walk today?`;
@@ -486,8 +486,8 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
         return "";
       }
       if (dayNum === 2) {
-        if (isPerfect) return `Welcome back, ${name}! Yesterday you remembered every single one — a perfect score on your very first palace. That tells me everything I need to know about you. Every day we work together your memory gets stronger and your palace more vivid. Today we expand. Ready?`;
-        if (isGood) return `Welcome back, ${name}! Yesterday you remembered ${ys} out of ${yt} — and that is a genuinely strong start. Memory palace is a skill and skills take practice. Every day we work together it gets sharper. Today we build on what you started. Ready to expand?`;
+        if (isPerfect) return `Welcome back, ${name}! Yesterday you remembered every single one — a perfect score on your very first palace. That tells me everything I need to know about you. Every day we work together your memory gets stronger and your palace more vivid. Today we expand. Ready? I have a small surprise waiting for you at the end.`;
+        if (isGood) return `Welcome back, ${name}! Yesterday you remembered ${ys} out of ${yt} — and that is a genuinely strong start. Memory palace is a skill and skills take practice. Every day we work together it gets sharper. Today we build on what you started. Ready to expand? I have a small surprise waiting for you at the end.`;
         return `Welcome back, ${name} — and well done for coming back. That is the most important thing. Yesterday was your very first memory palace ever built. The fact that you are here today means the technique is already working on you. Today we go again, and I promise it gets easier. Let us build something together.`;
       }
       if (dayNum === 3) {
@@ -496,7 +496,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
           : '';
         if (isPerfect) return `${palaceNote}${name}! Welcome back — and a warm huzzah for everything you have accomplished! Three days in and I am genuinely impressed. You remembered every single one yesterday. You built your palace, expanded it, and cleaned it like a pro. I hope you are noticing little improvements out there in your daily life — because I am certainly seeing them in here. Today we try something new that is going to stretch your memory in a brilliant new direction. Trust me on this one.`;
         if (isGood) return `${palaceNote}${name}! Welcome back — and a warm huzzah for everything you have accomplished! Three days in and you are doing beautifully. Yesterday you got ${ys} out of ${yt} — and every single attempt is strengthening your palace. I hope you are noticing little improvements out there in your daily life. Today we try something new that is going to stretch your memory in a brilliant direction. Trust me on this one.`;
-        return `${palaceNote}${name}! Welcome back — and a warm huzzah just for showing up three days in a row. That takes real commitment. Memory palace is a skill — it grows with repetition, not perfection. I promise you, something is clicking in there even when it does not feel like it. Today we try something new. Stay with me.`;
+        return `${palaceNote}${name}! Welcome back — and a warm huzzah just for showing up three days in a row. That takes real commitment. Memory palace is a skill — it grows with repetition, not perfection. I promise you, something is clicking in there even when it does not feel like it. Today we try something new. Stay with me. I have a small surprise waiting for you at the end.`;
       }
       if (dayNum === 4) {
         if (isPerfect) return `Welcome back, ${name}! Look at you — four days and a perfect score yesterday. Do you know how rare that is? Your memory palace is becoming second nature. Today we stretch to eight stops. A bigger palace. Your mind has been training for exactly this — I promise you are ready.`;
@@ -509,14 +509,14 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
         return `${name}, five days. I want you to hear this — showing up every day IS the training. Today we do something different that I think is going to surprise you. We use the palace for real life. Groceries. Appointments. Things you actually need. Sometimes the technique clicks when it gets personal. Let us find out.`;
       }
       if (dayNum === 6) {
-        if (isPerfect) return `Welcome back, ${name}! Six days — and yesterday you were remarkable. Today we try something most people find even more useful than objects — names. You are going to a dinner party tonight and you are going to remember every single person you meet. Here is the secret: turn every name into a vivid picture and attach it to the person's most memorable feature. Margaret? A giant magnet on her nose. The sillier the better. Ready?`;
-        if (isGood) return `Welcome back, ${name}! Six days in and your palace is growing stronger every session. Today we try names — and I think this might be your favourite day yet. Turn every name into a vivid picture attached to something memorable about the person. Frederick? Picture him with a Fred Flintstone hat. Silly works. Ready?`;
+        if (isPerfect) return `Welcome back, ${name}! Six days — and yesterday you were remarkable. Today we try something most people find even more useful than objects — names. You are going to a dinner party tonight and you are going to remember every single person you meet. Here is the secret: turn every name into a vivid picture and attach it to the person's most memorable feature. Margaret? A giant magnet on her nose. The sillier the better. Ready? I have a small surprise waiting for you at the end.`;
+        if (isGood) return `Welcome back, ${name}! Six days in and your palace is growing stronger every session. Today we try names — and I think this might be your favourite day yet. Turn every name into a vivid picture attached to something memorable about the person. Frederick? Picture him with a Fred Flintstone hat. Silly works. Ready? I have a small surprise waiting for you at the end.`;
         return `Welcome back, ${name}! Six days — that is something to be genuinely proud of. Today we switch things up completely and try names instead of objects. A fresh start, a new challenge. Sometimes a change is exactly what the palace needs. I think today is going to surprise you.`;
       }
       if (dayNum === 7) {
         if (isPerfect) return `${name}. Day seven. Take a breath and feel proud — because what you have done this week is genuinely extraordinary. Yesterday you were flawless. Today you graduate. Your biggest session yet. Full walk, reverse recall. And when we are done — I have something special waiting for you. Let us make this one count.`;
         if (isGood) return `${name}. Day seven. I want you to take a breath and feel proud for a moment. You came in knowing nothing about memory palaces. Look at you now. Today is your graduation — your biggest session yet. Full walk, reverse recall. And when we are done, I have something special waiting. Let us finish strong.`;
-        return `${name}. Day seven. Do you realize what you have done? You showed up every single day for a week. That is the whole game. The palace is in you now whether it feels like it or not. Today we do your graduation session — and when we are done, I have something waiting that I think will mean a lot. Let us go.`;
+        return `${name}. Day seven. Do you realize what you have done? You showed up every single day for a week. That is the whole game. The palace is in you now whether it feels like it or not. Today we do your graduation session — and when we are done, I have something waiting that I think will mean a lot. Let us go. I have a small surprise waiting for you at the end.`;
       }
       // Days 8+: generic returning user message
       const catLabel = isNames ? "people's names" : `${total} ${itemLabel(cat)}`;
