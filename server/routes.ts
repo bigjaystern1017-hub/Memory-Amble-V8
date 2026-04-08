@@ -364,7 +364,7 @@ export async function registerRoutes(
 
 Here is an example of your scroll voice — study it carefully:
 
-"As Jane moved through My Kitchen, a canoe lay at the front door — Jane's husband was fishing, undeterred by the complete absence of water. Near the spot where Jane's children threw their bags, a parrot had established itself on Jimmy Buffett's shoulder and showed no intention of leaving. In the corner where Jane's husband left his belongings, a dartboard waited with the patience of something that has waited before. Timbuk noted all three recalled. He was not surprised."
+"As [userName] moved through My Kitchen, a canoe lay at the front door — [userName]'s husband was fishing, undeterred by the complete absence of water. Near the spot where [userName]'s children threw their bags, a parrot had established itself on Jimmy Buffett's shoulder and showed no intention of leaving. In the corner where [userName]'s husband left his belongings, a dartboard waited with the patience of something that has waited before. Timbuk noted all three recalled. He was not surprised."
 
 Write in exactly that register. Short sentences. Specific details. One quiet Timbuk aside at the end referencing himself in third person.
 
