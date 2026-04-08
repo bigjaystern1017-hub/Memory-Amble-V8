@@ -4,6 +4,7 @@ import { SiGoogle } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
+import timbukAvatar from "@assets/timbuk-avatar_1773957235129.png";
 
 export interface PendingSessionData {
   date: string;
@@ -29,6 +30,8 @@ interface AmbleResultsProps {
   placeName?: string;
   stops?: string[];
   pendingSession?: PendingSessionData;
+  userScenes?: string[];
+  assignments?: Array<{ stopName: string; object: string }>;
 }
 
 const CONFETTI_COUNT = 40;
@@ -168,6 +171,8 @@ export function AmbleResults({
   placeName,
   stops = [],
   pendingSession,
+  userScenes,
+  assignments,
 }: AmbleResultsProps) {
   const percentage = totalItems > 0 ? Math.round((correctCount / totalItems) * 100) : 0;
   const isPerfect = totalItems > 0 && correctCount === totalItems;
@@ -183,6 +188,8 @@ export function AmbleResults({
   const [emailSent, setEmailSent] = useState(false);
   const [authError, setAuthError] = useState("");
   const [badgeSaved, setBadgeSaved] = useState(false);
+  const [scrollPhase, setScrollPhase] = useState<"hidden" | "prompt" | "loading" | "revealed">("prompt");
+  const [scrollText, setScrollText] = useState("");
 
   const nextDay = dayCount + 2;
   const displayName = userName || "friend";
@@ -273,6 +280,44 @@ export function AmbleResults({
       }
       window.location.reload();
     }
+  };
+
+  const handleShowScroll = async () => {
+    setScrollPhase("loading");
+    try {
+      const stopsWithScenes = (assignments || []).map((a, i) => ({
+        stopName: a.stopName,
+        object: a.object,
+        userScene: userScenes?.[i] || "",
+      }));
+      const res = await fetch("/api/generate-scroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userName: displayName,
+          palaceName: placeName || "your palace",
+          dayNumber: currentDay || 1,
+          correctCount,
+          totalItems,
+          stops: stopsWithScenes,
+        }),
+      });
+      const data = await res.json();
+      setScrollText(data.scroll || "");
+      setScrollPhase("revealed");
+    } catch {
+      setScrollText(`${displayName} walked through ${placeName || "the palace"} today and found the most extraordinary things waiting at every turn. Timbuk was not even slightly surprised.`);
+      setScrollPhase("revealed");
+    }
+  };
+
+  const getMilestoneNudge = (day: number) => {
+    if (day === 2) return "One more day and something interesting happens.";
+    if (day === 3) return "Three days. The palace is starting to feel familiar.";
+    if (day === 7) return "Seven days. Memory champions start somewhere. You started here.";
+    if (day === 14) return "Two weeks. Your brain has been quietly rewiring itself.";
+    if (day === 30) return "Thirty days. Timbuk has something special for you today.";
+    return null;
   };
 
   const ScoreSummary = () => (
@@ -516,79 +561,164 @@ export function AmbleResults({
 
   return (
     <>
-      {isPerfect && <Confetti />}
-      <div className="min-h-dvh bg-gradient-to-b from-primary/10 to-background flex flex-col items-center justify-center px-4 py-8 safe-area-inset">
-        <div className="max-w-2xl mx-auto text-center space-y-8">
-          <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" />
-            <div className="relative w-24 h-24 rounded-full bg-primary flex items-center justify-center mx-auto mb-6">
-              <Trophy className="w-12 h-12 text-primary-foreground" />
+      {isPerfect && scrollPhase === "hidden" && <Confetti />}
+      <div className="min-h-dvh bg-gradient-to-b from-primary/10 to-background flex flex-col items-center justify-center px-4 py-8">
+        <div className="max-w-2xl mx-auto w-full space-y-6">
+
+          {/* SCROLL PHASE — prompt, loading, or revealed */}
+          {scrollPhase === "prompt" && (
+            <div className="text-center space-y-6">
+              {isPerfect && <Confetti />}
+              <div className="flex justify-center">
+                <img src={timbukAvatar} alt="Timbuk" className="w-16 h-16 rounded-full" />
+              </div>
+              <p className="font-serif text-xl md:text-2xl text-foreground leading-relaxed">
+                I wrote you something while you were walking.<br />Shall I show you?
+              </p>
+              <Button
+                size="lg"
+                onClick={handleShowScroll}
+                className="gap-2 text-lg px-8 py-6"
+                data-testid="button-show-scroll"
+              >
+                Show me
+              </Button>
             </div>
-          </div>
+          )}
 
-          <div className="space-y-2">
-            <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight">
-              Session Complete!
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground">
-              Your Memory Palace is thriving.
-            </p>
-          </div>
-
-          <div className="bg-background border border-primary/20 rounded-2xl p-8 space-y-6">
-            <div className="space-y-2">
-              <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">
-                Today's Performance
-              </p>
-              <p className="text-5xl md:text-6xl font-bold font-serif">
-                {correctCount}
-                <span className="text-xl md:text-2xl text-muted-foreground ml-2">
-                  of {totalItems}
-                </span>
-              </p>
-              <p className="text-lg text-muted-foreground">
-                You remembered {correctCount} out of {totalItems} items today!
-              </p>
+          {scrollPhase === "loading" && (
+            <div className="text-center space-y-3 py-12">
+              <img src={timbukAvatar} alt="Timbuk" className="w-16 h-16 rounded-full mx-auto" />
+              <p className="text-foreground font-medium">Timbuk is writing your scroll...</p>
+              <p className="text-sm text-muted-foreground italic">He takes these seriously.</p>
             </div>
+          )}
 
-            <div className="h-px bg-border" />
+          {scrollPhase === "revealed" && (
+            <div className="space-y-6">
+              {/* THE SCROLL */}
+              <div
+                className="rounded-2xl p-6 md:p-8 space-y-4 border border-amber-200"
+                style={{
+                  background: "linear-gradient(135deg, #fef9f0 0%, #fdf3e0 50%, #fef9f0 100%)",
+                  boxShadow: "0 4px 24px rgba(180, 140, 80, 0.15)",
+                }}
+                data-testid="amble-scroll-card"
+              >
+                {/* Scroll header */}
+                <div className="flex items-center gap-3 pb-3 border-b border-amber-200/60">
+                  <img src={timbukAvatar} alt="Timbuk" className="w-10 h-10 rounded-full flex-shrink-0" />
+                  <div>
+                    <p className="font-serif text-sm font-semibold text-amber-900">The Amble Scroll of {displayName}</p>
+                    <p className="text-xs text-amber-700/70">{placeName || "Your Palace"} — Day {currentDay || 1}</p>
+                  </div>
+                </div>
 
-            <div className="flex items-center justify-center gap-2">
-              <Flame className="w-6 h-6 text-orange-500 flex-shrink-0" />
-              <div className="text-left">
-                <p className="text-sm text-muted-foreground">Current Streak</p>
-                <p className="text-2xl font-bold">
-                  {streak} {streak === 1 ? "Day" : "Days"}
+                {/* Scroll body */}
+                <p className="font-serif text-base md:text-lg leading-relaxed text-amber-950">
+                  {scrollText}
+                </p>
+
+                {/* Scroll footer */}
+                <div className="pt-3 border-t border-amber-200/60 flex items-center justify-between">
+                  <p className="text-xs text-amber-700/60">Built with Timbuk</p>
+                  <p className="text-xs text-amber-700/60">MemoryAmble.com</p>
+                </div>
+              </div>
+
+              {/* Share prompt */}
+              <div className="text-center space-y-4">
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  If it made you smile — it might do the same for someone you love.
+                </p>
+                <div className="space-y-2">
+                  <Button
+                    size="lg"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      const text = `Timbuk just wrote me an Amble Scroll after my memory training session 😄 Build your own → MemoryAmble.com`;
+                      window.open(`https://www.facebook.com/sharer/sharer.php?u=https://memoryamble.com&quote=${encodeURIComponent(text)}`, "_blank");
+                    }}
+                    data-testid="button-share-facebook"
+                  >
+                    Share to Facebook
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      const text = `Timbuk just wrote me an Amble Scroll after my memory training session 😄 Build your own → MemoryAmble.com`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                    }}
+                    data-testid="button-share-whatsapp"
+                  >
+                    Send via WhatsApp
+                  </Button>
+                  <button
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => {
+                      navigator.clipboard.writeText("https://memoryamble.com?ref=scroll");
+                    }}
+                    data-testid="button-copy-link"
+                  >
+                    Copy link
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Your scroll is yours. We don't post anything without your tap.
                 </p>
               </div>
+
+              {/* Divider */}
+              <div className="h-px bg-border" />
+
+              {/* Score section */}
+              <div className="bg-background border border-primary/20 rounded-2xl p-6 space-y-4 text-center">
+                <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">How you did</p>
+                <p className="text-5xl font-bold font-serif">
+                  {correctCount}
+                  <span className="text-xl text-muted-foreground ml-2">of {totalItems}</span>
+                </p>
+                <p className="text-muted-foreground">
+                  {correctCount === totalItems
+                    ? "Your palace held everything."
+                    : correctCount >= totalItems * 0.66
+                    ? "Your palace is working."
+                    : correctCount >= 1
+                    ? "The pictures are taking shape."
+                    : "You built a palace and walked through it. That's a real start."}
+                </p>
+                {streak > 1 && (
+                  <div className="flex items-center justify-center gap-2 pt-1">
+                    <Flame className="w-5 h-5 text-orange-500" />
+                    <p className="text-lg font-semibold">{streak} days in a row. Timbuk has stopped being surprised.</p>
+                  </div>
+                )}
+                {getMilestoneNudge(currentDay || 0) && (
+                  <p className="text-sm text-primary font-medium italic">
+                    {getMilestoneNudge(currentDay || 0)}
+                  </p>
+                )}
+              </div>
+
+              {/* See you tomorrow */}
+              <div className="text-center space-y-4">
+                <p className="text-sm text-muted-foreground italic">
+                  Your palace will be exactly as you left it.
+                </p>
+                <Button
+                  size="lg"
+                  onClick={handleSeeYouTomorrow}
+                  className="gap-2 text-lg px-8 py-6 w-full sm:w-auto"
+                  data-testid="button-see-you-tomorrow"
+                >
+                  See You Tomorrow
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="space-y-4">
-            <p className="text-base text-muted-foreground max-w-lg mx-auto">
-              {percentage === 100
-                ? "A perfect walk! Your palace is rock solid."
-                : percentage >= 66
-                ? "That's genuinely impressive. Your palace is working beautifully."
-                : percentage >= 33
-                ? "Good work today. The pictures are taking shape."
-                : "You built a palace and walked through it. That's a real start."}
-            </p>
-
-            <p className="text-sm text-muted-foreground">
-              Walk through your palace one more time tonight — the images will get even stickier.
-            </p>
-          </div>
-
-          <Button
-            size="lg"
-            onClick={handleSeeYouTomorrow}
-            className="gap-2 text-lg px-8 py-6 w-full sm:w-auto"
-            data-testid="button-see-you-tomorrow"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            See You Tomorrow
-          </Button>
         </div>
       </div>
     </>
