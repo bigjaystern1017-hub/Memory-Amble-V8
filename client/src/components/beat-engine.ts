@@ -702,7 +702,7 @@ Now, close your eyes and picture yourself at the entrance of your ${yourify(plac
       const levelNote = graduated
         ? `\n\nYou've levelled up! Next session: ${Math.min(total + 2, 9)} ${itemLabel(cat)}.`
         : "";
-      const dayNote = `\n\nSee you next time for Day ${dayNum + 1}!${levelNote}`;
+      const dayNote = `\n\nSee you next time for Day ${dayNum + 1}!${levelNote}\n\nI made you something while you were walking. Continue to see it.`;
 
       const placeName = state.placeName.toLowerCase().replace(/^your\s+/i, '');
       if (count === total) {
