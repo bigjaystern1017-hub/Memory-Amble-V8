@@ -63,23 +63,51 @@ function pickRandom(list: string[], count: number): string[] {
   const shuffled = [...list].sort(() => Math.random() - 0.5);
   const result: string[] = [];
   let animalCount = 0;
-  
+
+  const categories: Record<string, string> = {
+    "penguin": "animal", "flamingo": "animal", "tortoise": "animal",
+    "parrot": "animal", "goldfish": "animal", "swan": "animal", "peacock": "animal",
+    "birdbath": "garden", "garden gnome": "garden", "beehive": "garden",
+    "sunflower": "garden", "cactus": "garden", "weathervane": "garden",
+    "fishing rod": "outdoor", "anchor": "outdoor", "canoe": "outdoor",
+    "surfboard": "outdoor", "parachute": "outdoor", "hot air balloon": "outdoor",
+    "guitar": "music", "violin": "music", "trombone": "music", "accordion": "music",
+    "gramophone": "music", "jukebox": "music",
+    "telescope": "study", "compass": "study", "globe": "study",
+    "typewriter": "study", "monocle": "study",
+    "trophy": "game", "dartboard": "game", "bowling ball": "game",
+    "disco ball": "game", "pinball machine": "game",
+  };
+
+  const usedCategories = new Set<string>();
+
   for (const item of shuffled) {
     if (result.length >= count) break;
-    
+
+    const cat = categories[item] || "misc";
+
     if (RESTRICTED_ANIMALS.has(item)) {
-      // This is a restricted animal
-      if (animalCount === 0) {
-        result.push(item);
-        animalCount++;
-      }
-      // Otherwise skip it since we already have an animal
-    } else {
-      // Not a restricted animal, always add it
-      result.push(item);
+      if (animalCount >= 1) continue;
+      animalCount++;
+    }
+
+    if (cat !== "misc" && usedCategories.has(cat) && result.length < count) {
+      const remaining = shuffled.filter(i => !result.includes(i));
+      const hasAlternative = remaining.some(i => (categories[i] || "misc") !== cat);
+      if (hasAlternative) continue;
+    }
+
+    result.push(item);
+    if (cat !== "misc") usedCategories.add(cat);
+  }
+
+  if (result.length < count) {
+    for (const item of shuffled) {
+      if (result.length >= count) break;
+      if (!result.includes(item)) result.push(item);
     }
   }
-  
+
   return result;
 }
 
