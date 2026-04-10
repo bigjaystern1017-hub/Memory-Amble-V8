@@ -1,0 +1,205 @@
+Completely rewrite client/src/pages/landing.tsx. Replace all existing content with a new landing page following these exact specifications.
+Design direction: Clean, warm, professional. Oscar Health aesthetic — white space, serif headlines, minimal decoration. Purple accent color (#7C3AED) replacing the current amber primary for this page only. Mobile-first. No scroll animations, no parallax, no video.
+Fonts: Lora for headings (already loaded), Open Sans for body (already loaded).
+Use these exact image import paths at the top of the file:
+typescriptimport heroCoupleCoffe from "@assets/hero-couple-coffee_1775849358112.jpg";
+import heroGrandma from "@assets/hero-grandma-grandchild_1775849337609.jpg";
+import heroManYellow from "@assets/hero-man-yellow_1775849369466.jpg";
+import heroWomenLaughing from "@assets/hero-women-laughing_1775849325225.jpg";
+import heroFishingCouple from "@assets/hero-fishing-couple_1775849358110.jpg";
+import heroCouplesky from "@assets/hero-couple-sky_1775849325223.jpg";
+import familyDrawing from "@assets/family-drawing_1774730134242.png";
+import timbukAvatar from "@assets/timbuk-avatar_1773957235129.png";
+Keep these existing imports:
+typescriptimport { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, LogOut } from "lucide-react";
+Build these exact sections in order:
+
+SECTION 1 — HEADER (sticky)
+
+Left: Brain emoji icon in purple circle + "MemoryAmble" in Lora font
+Right: Sign In button (outline) if not authenticated, Sign Out if authenticated
+Clean white background, subtle bottom border
+Mobile friendly
+
+
+SECTION 2 — HERO
+
+Full width, white background
+Three photos side by side (on desktop), stacked on mobile:
+
+heroCoupleCoffe — left
+heroWomenLaughing — center (slightly taller, dominant)
+heroGrandma — right
+
+
+Photos should be cropped to portrait aspect ratio, rounded corners, overflow hidden
+Below the photos, centered text block:
+
+Small purple badge: "Used by memory champions for 2,500 years"
+H1 in Lora: "A sharper memory. Starting today."
+Subheading: "Ten minutes a day. A technique used by scholars and memory champions for millennia. Guided by Timbuk — your warm, wise personal memory coach."
+CTA button in purple: "Start My Free Day" or "Continue Day X" if returning user
+Small text below button: "Day 1 is completely free. No card needed."
+
+
+
+
+SECTION 3 — SOCIAL PROOF BAR
+
+Light grey/cream background
+Three stats centered:
+
+"2,500+" / "Years of science"
+"10 min" / "Per day"
+"7 days" / "To your first palace"
+
+
+
+
+SECTION 4 — ANCHOR COPY (pricing context)
+
+White background, max-width-2xl centered
+No header — just this copy in warm serif, slightly larger than body:
+
+"Memory training courses run $1,200 to $3,000. Private memory coaches charge more. We priced MemoryAmble at $8.47 a month deliberately — not because it's worth less, but because we believe the people who need this most shouldn't have to pay what only some people can afford. A portion of every subscription funds Alzheimer's and Sanfilippo research. The more people we reach, the more we can fund the fight."
+
+Thin decorative rule above and below
+
+
+SECTION 5 — HOW IT WORKS
+
+Three columns on desktop, stacked on mobile
+Large emoji icon, serif title, body text for each:
+
+🏠 "Build Your Palace" — "Pick a place you know well. Your home, a favourite walk. That's your memory palace. It already exists."
+🍍 "Plant Vivid Images" — "Timbuk gives you items to place. You make them vivid, strange, personal. The weirder the better."
+🧠 "Walk & Recall" — "Stroll through your palace in your mind. Whatever you planted will be waiting. Every time."
+
+
+
+
+SECTION 6 — MEET TIMBUK
+
+Cream/warm background
+Left side: Timbuk avatar image, large, centered
+Right side:
+
+H2: "Meet Timbuk"
+Body: "Timbuk is your personal memory coach — warm, wise, and slightly arch. He teaches through doing, not lecturing. He remembers your associations, celebrates your wins, and never makes you feel tested. He has been doing this for a very long time."
+Small italics: "He also has opinions about penguins."
+
+
+On mobile: stacked, Timbuk centered above text
+
+
+SECTION 7 — TESTIMONIALS (placeholder)
+
+White background
+H2: "What people are saying"
+Three cards side by side (desktop), stacked (mobile)
+Each card: quote in serif italics, name and age below, thin border, rounded corners
+Use these placeholder quotes:
+
+"I remembered every name at my grandson's birthday party for the first time in three years. My daughter noticed." — Margaret, 71
+"I was skeptical. Ten minutes later I had built something I was genuinely proud of." — Robert, 68
+"Timbuk makes it feel like play, not work. I look forward to it every morning." — Dorothy, 74
+
+
+
+
+SECTION 8 — OUR STORY (founder)
+
+Warm cream background
+Left: familyDrawing image, medium size, slight drop shadow
+Right:
+
+H2: "Our story"
+This exact copy:
+
+
+
+"MemoryAmble started with one person.
+My father is 84. Sharp, funny, present — but quietly losing confidence in his own memory. Not because anything was terribly wrong. Just the slow, ordinary erosion that comes with time. He'd forget a name. Lose a word mid-sentence. Wave it off with a laugh. But I could see it bothering him.
+I wanted to give him something. Not a puzzle app. Not a quiz. Something warm, patient, and genuinely useful — that made him feel capable, not tested.
+That's Timbuk. That's MemoryAmble.
+If you have someone in your life like my father — or if you are that person — this was built for you.
+— Jay"
+
+SECTION 9 — PRICING
+
+White background
+H2: "Simple pricing"
+Two cards side by side:
+
+Card 1 — MemoryAmble (highlighted, purple border):
+
+Price: "$8.47/month"
+Subtext: "Less than 30 cents a day"
+Features list with purple checkmarks:
+
+30-day guided memory bootcamp
+Daily sessions with Timbuk
+Your Amble Scroll after every session
+Streak tracking
+Round up to donate to memory research
+
+
+Button: "Start My Free Day" in purple
+
+Card 2 — MemoryAmble Pro (grey, subtle):
+
+Price: "$19.97/month"
+Features list:
+
+Everything in MemoryAmble
+Extended session history
+Advanced palace analytics
+Family sharing — up to 3 members
+Priority support
+
+
+Button: "Learn More" outline style
+Below both cards, small text: "Memory training courses cost $1,200–$3,000. You're getting the same ancient technique, guided daily, for less than one coffee a week."
+
+
+SECTION 10 — MISSION
+
+Purple background (#7C3AED), white text
+Centered, max-width-2xl
+H2 in white: "Our mission"
+Body in white/80 opacity: "We believe memory training should be accessible to everyone. A portion of every subscription goes to Alzheimer's research and Sanfilippo syndrome research — memory loss at both ends of life. The more people we help remember, the more we can fund the fight."
+Two secondary photos below, side by side: heroFishingCouple and heroManYellow, rounded corners
+
+
+SECTION 11 — FINAL CTA
+
+White background, centered
+H2 in Lora: "Your memory is waiting."
+Subtext: "When you're ready — Day 1 is completely free. No card needed."
+Purple CTA button: "Start My Free Day" or "Continue Day X"
+Small text: "Founding member pricing available now — this rate won't last forever."
+
+
+FOOTER
+
+Light border top
+Left: © 2025 MemoryAmble
+Center: "Built with care for those who deserve a sharper mind."
+Right: brightermindlabs@outlook.com as mailto link
+
+
+IMPORTANT TECHNICAL NOTES:
+
+All navigation uses the existing navigate from wouter
+CTA buttons navigate to /amble
+Sign In navigates to /login
+currentDay state reads from localStorage memory-amble-day as before
+No external CSS — Tailwind only
+Use inline styles only for the purple accent color #7C3AED since it's not in the current CSS variables
+The page must render cleanly on mobile — test all sections for mobile layout
+
+Do not change any other files. Do not touch amble.tsx, beat-engine.ts, routes.ts or any other file. Only rewrite landing.tsx.
