@@ -311,10 +311,10 @@ export default function Landing() {
             </p>
             <div className="flex gap-4 justify-center pt-4">
               <div className="w-1/2 rounded-2xl overflow-hidden" style={{ aspectRatio: "4/3" }}>
-                <img src={heroFishingCouple} alt="Couple fishing" className="w-full h-full object-cover" />
+                <img src={heroFishingCouple} alt="Couple fishing" className="w-full h-full object-cover" style={{ objectPosition: "center top" }} />
               </div>
               <div className="w-1/2 rounded-2xl overflow-hidden" style={{ aspectRatio: "4/3" }}>
-                <img src={heroManYellow} alt="Man in yellow" className="w-full h-full object-cover" />
+                <img src={heroManYellow} alt="Man in yellow" className="w-full h-full object-cover" style={{ objectPosition: "center" }} />
               </div>
             </div>
           </div>
