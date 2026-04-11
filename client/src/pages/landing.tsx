@@ -9,7 +9,7 @@ import heroManYellow from "@assets/hero-man-yellow_1775849369466.jpg";
 import heroWomenLaughing from "@assets/hero-women-laughing_1775849325225.jpg";
 import heroFishingCouple from "@assets/hero-fishing-couple_1775849358110.jpg";
 import heroCouplesky from "@assets/hero-couple-sky_1775849325223.jpg";
-import familyDrawing from "@assets/family-drawing_1774730134242.png";
+import familyDrawing from "@assets/family-drawing_1775912885165.png";
 import timbukAvatar from "@assets/timbuk-avatar_1773957235129.png";
 
 const PURPLE = "#7C3AED";
