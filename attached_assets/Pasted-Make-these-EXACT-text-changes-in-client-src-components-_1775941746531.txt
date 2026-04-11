@@ -1,0 +1,77 @@
+Make these EXACT text changes in client/src/components/beat-engine.ts. These are copy-only changes — do not change any logic, routing, function signatures, or anything else. Change ONLY the quoted strings as specified below.
+
+1. In the "onboard-palace" case, find this text:
+"Good. ${place} — that is your Memory Palace. It already exists. We are just going to furnish it. Scholars, orators and memory champions have been using this technique for over 2,000 years. Here is the secret, ${name}. Your brain is actually quite poor at remembering dry facts — names, lists, numbers. But it is extraordinary at remembering places. Spaces you have walked through a thousand times."
+
+Replace with:
+"Good. ${place} — that is your Memory Palace. It already exists. We are just going to furnish it. Scholars, orators and memory champions have been using this technique for over 2,000 years. Here is the secret, ${name}. Your brain is not great at remembering dry facts — names, lists, numbers. But it is good at remembering places."
+
+2. In the "onboard-vivid" case, find this text:
+"The Memory Palace uses exactly that. We take an object — say, a penguin — and place it somewhere in your home. But here is where it gets fun, ${name}. We do not just plop a penguin by your front door. We make it YOURS. Is it enormous — blocking the whole doorway? Is it wearing a bow tie and tap dancing? Is it that same penguin that waddled after you at the zoo when you were eight years old and your mother had to pull you away?"
+
+Replace with:
+"The Memory Palace uses exactly that. We take an object — say, a penguin — and place it anywhere in your home. But here is where it gets fun, ${name}. We do not just plop it anywhere. We make it YOURS. Is it big — blocking the whole doorway? Is it wearing a bow tie and tap dancing? Is it that same penguin that waddled after you at the zoo when you were eight years old and your mother had to pull you away?"
+
+3. In the "onboard-secret" case, find this text:
+"The more vivid, the more ridiculous, the more personal — the harder your brain works to file it. And the harder it works, the longer it sticks."
+
+Replace with:
+"The more vivid, the more ridiculous, the more personal — the harder your brain works to file it. And the harder it works, the more it sticks."
+
+4. In the "onboard-skill" case, find this text:
+return `Fantastic — I was hoping you would say that. Before we begin, one important thing. Memory is not fixed. It is a skill — like playing piano or riding a bike. And like any skill it can be trained and improved. Which is exactly why I am so excited to work with you today. ${name}, I have a question. Is there a place you know so well you could walk through it with your eyes closed? Your home, a garden, somewhere you have been a thousand times? Tell me — where shall we walk today?`;
+
+Replace with:
+return `Fantastic — I was hoping you would say that. Before we begin, one important thing. Memory is not fixed. It is a skill — like playing piano or riding a bike. And like any skill it can be trained and improved. Which is exactly why I am so excited to work with you today.\n\n${name}, I have a question. Is there a place you know so well you could walk through it with your eyes closed? Your home, a garden, somewhere you have been a thousand times? Tell me — where shall we walk today?`;
+
+The only change is adding \n\n before ${name} to create a visual paragraph break between the teaching section and the palace question.
+
+5. In the "onboard-ready" case, find this text:
+"Right then. If you can picture your home, you have already done half the work. I have a hint button if you ever get a little stuck. Ready? Let us find your palace."
+
+Replace with:
+"If you can picture your home, you have already done half the work. I have a hint button if you ever get a little stuck. Ready? Let us find your palace."
+
+6. In the "ask-stop" case, find the idx === 0 return:
+"You are at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. What is the first thing that catches your eye? That is your first stop."
+
+Replace with:
+"You are at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. What is your first stop?"
+
+7. In the "ask-stop" case, find the idx === total - 1 return:
+"Almost there. As you continue through your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}, where do you end up? What is your last stop?"
+
+Replace with:
+"As you continue through your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}, where do you end up next?"
+
+8. In the "practice-intro" case, find:
+"Before we place your real items — let me show you exactly how this works. I will give you one practice item. Just tell me the first thing that comes to mind when you picture it at your first stop."
+
+Replace with:
+"Before we place your items — let me show you exactly how this works. I will give you one practice item. Just tell me the first thing that comes to mind when you picture it at your first stop."
+
+9. In the "place-object" case, find the return for the default (non-names, non-practical) category:
+"${prefix} — ${emoji} ${a.object}. Now make it YOURS — what is happening with that ${a.object} at __STOP__?"
+
+Replace with:
+"${prefix} — ${emoji} ${a.object}. Make it YOURS — what is happening with that ${a.object} at __STOP__?"
+
+10. In the "practice-buffer" case, find:
+"Good. Now let us see if it stuck. Close your eyes for a moment. Picture __STOP__."
+
+Replace with:
+"Now let us see if it stuck. Close your eyes for a moment. Picture __STOP__."
+
+11. In the "walkthrough-intro" case, find:
+"Close your eyes. You are back at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. Just walk — whatever you placed will be waiting."
+
+Replace with:
+"You are back at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. Just walk — whatever you placed will be waiting."
+
+12. In the "recall" case, find the idx === 0 return for the non-names path:
+"${stopLabel}. Something strange is here. What do you see?"
+
+Replace with:
+"${stopLabel}. Something strange. What do you see?"
+
+Do not change anything else. Do not change any logic, routing, imports, or function signatures. Only change the quoted text strings exactly as specified above.

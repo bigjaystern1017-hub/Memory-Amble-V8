@@ -467,19 +467,19 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     }
 
     case "onboard-skill":
-      return `Fantastic — I was hoping you would say that. Before we begin, one important thing. Memory is not fixed. It is a skill — like playing piano or riding a bike. And like any skill it can be trained and improved. Which is exactly why I am so excited to work with you today. ${name}, I have a question. Is there a place you know so well you could walk through it with your eyes closed? Your home, a garden, somewhere you have been a thousand times? Tell me — where shall we walk today?`;
+      return `Fantastic — I was hoping you would say that. Before we begin, one important thing. Memory is not fixed. It is a skill — like playing piano or riding a bike. And like any skill it can be trained and improved. Which is exactly why I am so excited to work with you today.\n\n${name}, I have a question. Is there a place you know so well you could walk through it with your eyes closed? Your home, a garden, somewhere you have been a thousand times? Tell me — where shall we walk today?`;
 
     case "onboard-palace":
-      return `Good. ${place} — that is your Memory Palace. It already exists. We are just going to furnish it. Scholars, orators and memory champions have been using this technique for over 2,000 years. Here is the secret, ${name}. Your brain is actually quite poor at remembering dry facts — names, lists, numbers. But it is extraordinary at remembering places. Spaces you have walked through a thousand times.`;
+      return `Good. ${place} — that is your Memory Palace. It already exists. We are just going to furnish it. Scholars, orators and memory champions have been using this technique for over 2,000 years. Here is the secret, ${name}. Your brain is not great at remembering dry facts — names, lists, numbers. But it is good at remembering places.`;
 
     case "onboard-vivid":
-      return `The Memory Palace uses exactly that. We take an object — say, a penguin — and place it somewhere in your home. But here is where it gets fun, ${name}. We do not just plop a penguin by your front door. We make it YOURS. Is it enormous — blocking the whole doorway? Is it wearing a bow tie and tap dancing? Is it that same penguin that waddled after you at the zoo when you were eight years old and your mother had to pull you away?`;
+      return `The Memory Palace uses exactly that. We take an object — say, a penguin — and place it anywhere in your home. But here is where it gets fun, ${name}. We do not just plop it anywhere. We make it YOURS. Is it big — blocking the whole doorway? Is it wearing a bow tie and tap dancing? Is it that same penguin that waddled after you at the zoo when you were eight years old and your mother had to pull you away?`;
 
     case "onboard-secret":
-      return `The more vivid, the more ridiculous, the more personal — the harder your brain works to file it. And the harder it works, the longer it sticks. That is the whole secret right there. And ${name} — there is no failing here. No test. No pressure. This is a skill and the most important thing is practice. The more we walk together the sharper it gets. You can take this skill into your real life — grocery lists, names, appointments, whatever you like. Now hit that magic button...`;
+      return `The more vivid, the more ridiculous, the more personal — the harder your brain works to file it. And the harder it works, the more it sticks. That is the whole secret right there. And ${name} — there is no failing here. No test. No pressure. This is a skill and the most important thing is practice. The more we walk together the sharper it gets. You can take this skill into your real life — grocery lists, names, appointments, whatever you like. Now hit that magic button...`;
 
     case "onboard-ready":
-      return `Right then. If you can picture your home, you have already done half the work. I have a hint button if you ever get a little stuck. Ready? Let us find your palace.`;
+      return `If you can picture your home, you have already done half the work. I have a hint button if you ever get a little stuck. Ready? Let us find your palace.`;
 
     case "welcome": {
       if (state.sessionOpenerGreeting) {
@@ -548,10 +548,10 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
 
     case "ask-stop": {
       if (idx === 0) {
-        return `You are at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. What is the first thing that catches your eye? That is your first stop.`;
+        return `You are at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. What is your first stop?`;
       }
       if (idx === total - 1) {
-        return `Almost there. As you continue through your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}, where do you end up? What is your last stop?`;
+        return `As you continue through your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}, where do you end up next?`;
       }
       return `What do you notice next?`;
     }
@@ -563,7 +563,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return "";
 
     case "practice-intro":
-      return `Before we place your real items — let me show you exactly how this works. I will give you one practice item. Just tell me the first thing that comes to mind when you picture it at your first stop.`;
+      return `Before we place your items — let me show you exactly how this works. I will give you one practice item. Just tell me the first thing that comes to mind when you picture it at your first stop.`;
 
     case "practice-item": {
       const firstStop = yourify(firstCap(state.stops[0] || "your first stop"));
@@ -574,7 +574,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return SMART_CONFIRM;
 
     case "practice-buffer":
-      return `Good. Now let us see if it stuck. Close your eyes for a moment. Picture __STOP__.`;
+      return `Now let us see if it stuck. Close your eyes for a moment. Picture __STOP__.`;
 
     case "practice-recall":
       return `${yourify(firstCap(state.stops[0] || "Front door"))}. What do you see there?`;
@@ -623,7 +623,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       if (cat === 'practical') {
         return `${prefix} — ${emoji} ${a.object}. Now make it YOURS — how are you going to remember ${practicalItemPhrase(a.object)}?`;
       }
-      return `${prefix} — ${emoji} ${a.object}. Now make it YOURS — what is happening with that ${a.object} at __STOP__?`;
+      return `${prefix} — ${emoji} ${a.object}. Make it YOURS — what is happening with that ${a.object} at __STOP__?`;
     }
 
     case "mirror-object":
@@ -634,7 +634,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
     }
 
     case "walkthrough-intro": {
-      return `Close your eyes. You are back at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. Just walk — whatever you placed will be waiting.`;
+      return `You are back at the entrance of your ${yourify(place).toLowerCase().replace(/^your\s+/i, '')}. Just walk — whatever you placed will be waiting.`;
     }
 
     case "reverse-intro": {
@@ -656,7 +656,7 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
         return `${stopLabel}. Someone you met. Who are they?`;
       }
       if (idx === 0) {
-        return `${stopLabel}. Something strange is here. What do you see?`;
+        return `${stopLabel}. Something strange. What do you see?`;
       }
       if (idx === total - 1) {
         return `${stopLabel}. Last one. What's waiting for you here?`;
