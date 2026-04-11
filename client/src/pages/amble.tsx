@@ -649,6 +649,14 @@ export default function Amble() {
         playSound("wisdom");
         await showWisdomMessage(displayText);
       } else {
+        if (beat === "react-recall") {
+          if (resolvedText === SMART_CONFIRM) playSound("correct");
+          else playSound("incorrect");
+        } else if (beat === "react-check-in") {
+          const lc = displayText.toLowerCase();
+          if (lc.includes("got it") || lc.includes("remembered")) playSound("correct");
+          else playSound("incorrect");
+        }
         await showTimbukWithTypewriter(displayText);
       }
 
@@ -1099,6 +1107,7 @@ export default function Amble() {
   }, [progressData, updateState]);
 
   const handleContinue = useCallback(async () => {
+    playSound("click");
     if (processingRef.current) return;
     processingRef.current = true;
     setShowContinue(false);
@@ -1151,6 +1160,7 @@ export default function Amble() {
   }, [currentBeat, doScreenWipe, updateState]);
 
   const handleExpansionAccept = useCallback(async () => {
+    playSound("click");
     if (processingRef.current) return;
     processingRef.current = true;
     setShowContinue(false);
@@ -1163,6 +1173,7 @@ export default function Amble() {
   }, [updateState]);
 
   const handleExpansionDecline = useCallback(async () => {
+    playSound("click");
     if (processingRef.current) return;
     processingRef.current = true;
     setShowContinue(false);
@@ -1186,6 +1197,7 @@ export default function Amble() {
   }, []);
 
   const handleSpark = useCallback(async () => {
+    playSound("click");
     if (sparkLoading) return;
     setSparkLoading(true);
 
@@ -1218,6 +1230,7 @@ export default function Amble() {
   }, [sparkLoading, addTimbukInstant]);
 
   const handleRecallHint = useCallback(async () => {
+    playSound("click");
     if (recallHintLoading) return;
     const s = stateRef.current;
     const ri = recallAssignmentIndex(s.stepIndex, s);
@@ -1280,8 +1293,6 @@ export default function Amble() {
               .toLowerCase();
             if (fuzzyMatch(text, keyword)) addCorrect = 1;
           }
-          if (addCorrect === 1) playSound("correct");
-          else playSound("incorrect");
           s = { ...s, checkInAnswers: newAnswers, checkInCorrectCount: s.checkInCorrectCount + addCorrect };
           break;
         }
@@ -1366,8 +1377,6 @@ export default function Amble() {
               .toLowerCase();
             if (fuzzyMatch(text, keyword)) addCorrect = 1;
           }
-          if (addCorrect === 1) playSound("correct");
-          else playSound("incorrect");
           // Don't increment correctCount during expansion recall phase
           const inExpansionPhase = s.expansionAccepted && s.baseItemCount !== undefined && idx >= s.baseItemCount;
           const correctDelta = inExpansionPhase ? 0 : addCorrect;

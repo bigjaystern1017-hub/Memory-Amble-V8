@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { playSound } from "@/lib/sounds";
 
 interface EducationSlidesProps {
   onComplete: () => void;
@@ -18,11 +19,13 @@ export function EducationSlides({ onComplete }: EducationSlidesProps) {
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
 
   const handleGoalSelect = (id: string) => {
+    playSound("click");
     setSelectedGoal(id);
   };
 
   const handleGoalContinue = () => {
     if (!selectedGoal) return;
+    playSound("click");
     localStorage.setItem("memoryamble-goal", selectedGoal);
     setScreen(1);
   };
@@ -92,7 +95,7 @@ export function EducationSlides({ onComplete }: EducationSlidesProps) {
             size="lg"
             className="w-full gap-2 text-lg"
             style={{backgroundColor: '#7C3AED'}}
-            onClick={() => setScreen(2)}
+            onClick={() => { playSound("click"); setScreen(2); }}
           >
             Tell me more
             <ArrowRight className="w-5 h-5" />
@@ -130,7 +133,7 @@ export function EducationSlides({ onComplete }: EducationSlidesProps) {
             size="lg"
             className="w-full gap-2 text-lg"
             style={{backgroundColor: '#7C3AED'}}
-            onClick={() => setScreen(3)}
+            onClick={() => { playSound("click"); setScreen(3); }}
           >
             I'm ready
             <ArrowRight className="w-5 h-5" />
@@ -159,7 +162,7 @@ export function EducationSlides({ onComplete }: EducationSlidesProps) {
           size="lg"
           className="w-full gap-2 text-lg"
           style={{backgroundColor: '#7C3AED'}}
-          onClick={onComplete}
+          onClick={() => { playSound("click"); onComplete(); }}
         >
           Let's go
           <ArrowRight className="w-5 h-5" />

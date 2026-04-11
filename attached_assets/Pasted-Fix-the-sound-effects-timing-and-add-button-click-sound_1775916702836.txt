@@ -1,0 +1,30 @@
+Fix the sound effects timing and add button click sounds. Here's exactly what to do:
+
+1. In client/src/lib/sounds.ts, add one new sound:
+
+  • "click" — a clean, satisfying button click. Two very short sine blips (1800Hz then 2200Hz), each 15ms, 10ms gap between them. Think mouse click, not typewriter. Gain 0.2. Crisp and light.
+
+2. In client/src/pages/amble.tsx, REMOVE the playSound("correct") and playSound("incorrect") calls from processUserInput. Remove them from BOTH the "recall" case AND the "check-in-recall" case. These are firing too early — the user hears them at the same time as the send sound which makes them blend together and feel wrong.
+
+3. Instead, add the correct/incorrect sounds in advanceBeat, inside the react-recall handling, AFTER the smart-confirm response comes back and BEFORE showTimbukWithTypewriter is called. Here's the logic:
+
+   In the react-recall SMART_CONFIRM block, the code already determines whether the answer is correct by checking fuzzyMatch. After that determination is made, and after the displayText is set, but BEFORE the typewriter shows it:
+   - If the recall was correct: call playSound("correct")  
+   - If the recall was incorrect: call playSound("incorrect")
+
+   Do the same for react-check-in: in the advanceBeat function where beat === "react-check-in" is handled (this goes through getTimbukMessage, not SMART_CONFIRM), after the message is determined but before showTimbukWithTypewriter, check if the check-in answer was correct by looking at whether the message contains the word "got it" or "remembered" (correct) vs "It was" or "That was" (incorrect), and play the appropriate sound.
+
+   Actually — simpler approach: In advanceBeat, for react-recall, the correct case returns SMART_CONFIRM and incorrect returns a hardcoded string. So: if the raw text from getTimbukMessage was SMART_CONFIRM, the answer was correct. If it was NOT SMART_CONFIRM, it was incorrect. Play the sound based on that check, right before the typewriter call.
+
+   For react-check-in, same logic: getTimbukMessage returns different text for correct vs incorrect. The correct responses contain "got it" or "remembered". Check for that.
+
+4. Add playSound("click") to ALL of these button interactions:
+   - In handleContinue: call playSound("click") at the very start, before the processingRef check
+   - In handleExpansionAccept: call playSound("click") at the very start
+   - In handleExpansionDecline: call playSound("click") at the very start
+   - In handleSpark: call playSound("click") at the very start
+   - In handleRecallHint: call playSound("click") at the very start
+
+5. Also add playSound("click") to the education slides navigation. In client/src/components/education-slides.tsx, import { playSound } from "@/lib/sounds" and call playSound("click") whenever the user taps to advance to the next slide or taps any selection button (like the goal selection buttons). Find the onClick handlers for slide advancement and goal selection and add playSound("click") to each one.
+
+6. Do not change anything else. Do not modify beat-engine.ts. Do not change any Timbuk copy, routing logic, or CSS. Do not remove the existing "send", "transition", "complete", or "wisdom" sound triggers.

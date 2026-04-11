@@ -22,7 +22,7 @@ function resumeContext(ctx: AudioContext): Promise<void> {
   return Promise.resolve();
 }
 
-export function playSound(name: "correct" | "send" | "incorrect" | "transition" | "complete" | "wisdom"): void {
+export function playSound(name: "correct" | "send" | "incorrect" | "transition" | "complete" | "wisdom" | "click"): void {
   try {
     const ctx = getAudioContext();
     if (!ctx || !masterGain) return;
@@ -30,6 +30,24 @@ export function playSound(name: "correct" | "send" | "incorrect" | "transition" 
       try {
         const now = ctx.currentTime;
         switch (name) {
+          case "click": {
+            // Two crisp sine blips — clean button click
+            const freqs = [1800, 2200];
+            freqs.forEach((freq, i) => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = "sine";
+              osc.frequency.value = freq;
+              const t = now + i * 0.025;
+              gain.gain.setValueAtTime(0.2, t);
+              gain.gain.exponentialRampToValueAtTime(0.001, t + 0.015);
+              osc.connect(gain);
+              gain.connect(masterGain!);
+              osc.start(t);
+              osc.stop(t + 0.015);
+            });
+            break;
+          }
           case "correct": {
             // Two quick high sine hits — cheerful "ding-ding!"
             for (let i = 0; i < 2; i++) {
