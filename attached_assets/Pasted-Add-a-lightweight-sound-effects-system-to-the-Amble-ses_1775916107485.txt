@@ -1,0 +1,42 @@
+Add a lightweight sound effects system to the Amble session. Here's exactly what to do:
+
+1. Create a new file: client/src/lib/sounds.ts
+
+This file should:
+- Create a simple AudioContext-based sound synthesizer (no external audio files needed)
+- Export a `playSound` function that accepts a sound name string
+- Generate these sounds programmatically using Web Audio API oscillators and gain nodes:
+
+  • "correct" — a bright, cheerful two-hit "ding-ding!" like a game show bell when someone gets the answer right. Two quick hits of a high sine wave (around A5 ~ 880Hz), each about 80ms, with a 70ms gap between them. Snappy and clear but not harsh — think casual quiz show, not alarm. A brief burst of warmth. Gain around 0.35. This is the star of the show — it should make a 75-year-old smile, not jump.
+
+  • "send" — a very subtle short click/pop, 50ms, barely audible. Just tactile confirmation that input was sent. Low frequency sine blip. Gain 0.15.
+
+  • "incorrect" — almost nothing. A single very soft, low, brief tone (around C3), 200ms, quick fade. It should feel like a gentle "hmm" — like Timbuk tilting his head slightly. The user should barely register it consciously. Gain 0.12. We are NOT punishing wrong answers. If anything, the user should feel the ABSENCE of the ding-ding rather than the presence of a negative sound.
+
+  • "transition" — a gentle whoosh using white noise filtered through a bandpass filter, 500ms, fade in then fade out. For screen wipes between phases. Gain 0.2.
+
+  • "complete" — a three-note ascending chord (C4 → E4 → G4, played as a quick arpeggio over 600ms), sine waves, warm and resolved. The "you did it" feeling at the end of a session. Gain 0.3.
+
+  • "wisdom" — a single sustained note (D4) with slight vibrato, 800ms, very soft. For wisdom drop moments. Mysterious, not dramatic. Gain 0.15.
+
+- Master gain 0.3, with individual gains as specified above
+- Handle AudioContext resume on first user interaction (browsers require this)
+- If AudioContext fails or is unavailable, fail silently — never break the app
+
+2. In client/src/pages/amble.tsx, add sound triggers at these specific moments:
+
+- Import { playSound } from "@/lib/sounds"
+
+- In handleUserInput, after addUserMessage(text): call playSound("send")
+
+- In processUserInput, in the "recall" case, after determining addCorrect: if addCorrect === 1 call playSound("correct"), if addCorrect === 0 call playSound("incorrect")
+
+- In processUserInput, in the "check-in-recall" case, after determining addCorrect: if addCorrect === 1 call playSound("correct"), if addCorrect === 0 call playSound("incorrect")
+
+- In advanceBeat, when beat === "wisdom-drop": call playSound("wisdom") before showWisdomMessage
+
+- In doScreenWipe: call playSound("transition") at the start before the fade
+
+- In advanceBeat, when beat === "final": call playSound("complete") before showing the final message
+
+3. Do not change anything else. Do not modify beat-engine.ts. Do not modify any CSS. Do not change any Timbuk copy or any routing logic. Only add the sounds.ts file and the playSound calls in amble.tsx as described above.

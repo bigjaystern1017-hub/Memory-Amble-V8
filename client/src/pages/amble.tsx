@@ -43,6 +43,7 @@ import {
 } from "@/lib/progress";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
+import { playSound } from "@/lib/sounds";
 import { Brain, ArrowRight, Lightbulb, LogOut, Flame, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -324,6 +325,7 @@ export default function Amble() {
   }, []);
 
   const doScreenWipe = useCallback(async () => {
+    playSound("transition");
     setChatFading(true);
     await new Promise<void>((r) => setTimeout(r, 600));
     setMessages([]);
@@ -644,6 +646,7 @@ export default function Amble() {
       }
 
       if (beat === "wisdom-drop") {
+        playSound("wisdom");
         await showWisdomMessage(displayText);
       } else {
         await showTimbukWithTypewriter(displayText);
@@ -657,6 +660,7 @@ export default function Amble() {
       }
 
       if (beat === "final") {
+        playSound("complete");
         setIsFinished(true);
         const nextLevel = getNextLevel(
           progressData.currentLevel,
@@ -1276,6 +1280,8 @@ export default function Amble() {
               .toLowerCase();
             if (fuzzyMatch(text, keyword)) addCorrect = 1;
           }
+          if (addCorrect === 1) playSound("correct");
+          else playSound("incorrect");
           s = { ...s, checkInAnswers: newAnswers, checkInCorrectCount: s.checkInCorrectCount + addCorrect };
           break;
         }
@@ -1360,6 +1366,8 @@ export default function Amble() {
               .toLowerCase();
             if (fuzzyMatch(text, keyword)) addCorrect = 1;
           }
+          if (addCorrect === 1) playSound("correct");
+          else playSound("incorrect");
           // Don't increment correctCount during expansion recall phase
           const inExpansionPhase = s.expansionAccepted && s.baseItemCount !== undefined && idx >= s.baseItemCount;
           const correctDelta = inExpansionPhase ? 0 : addCorrect;
@@ -1388,6 +1396,7 @@ export default function Amble() {
       processingRef.current = true;
 
       addUserMessage(text);
+      playSound("send");
       setShowSparkButton(false);
       if (currentBeat === "recall") setRecallHint(null);
 
