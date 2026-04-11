@@ -222,15 +222,16 @@ export default function Landing() {
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900" style={{ fontFamily: "Lora, serif" }}>Our story</h2>
               <div className="text-gray-600 leading-relaxed space-y-4">
                 <p>I built this for one person first.</p>
-                <p>My father is 84. Sharp, funny, present — but quietly losing confidence in his own memory. Not because anything was terribly wrong. Just the slow, ordinary erosion that comes with time. He'd forget a name. Lose a word mid-sentence. Wave it off with a laugh. But I could see it bothering him.</p>
-                <p>I wanted to give him something. Not a puzzle app. Not a quiz. Something warm, patient, and genuinely useful — that made him feel capable, not tested.</p>
-                <p>That's Timbuk. That's MemoryAmble.</p>
+                <p>My father is 84. He was always sharp, funny and present — but I noticed in the past few years he quietly began to lose confidence in his own memory. Not because anything was terribly wrong. Just the slow, ordinary erosion that comes with time. He'd lose a word mid-sentence or get frustrated watching a movie or reading a book. He'd wave it off with a laugh. But I could see it bothering him.</p>
+                <p>My dad was always a lifelong learner and I wanted to give him something — a way to train and improve. Not a puzzle app or a quiz. I'd read about memory training years before, used it myself, and saw how fun and powerful it could be. What could genuinely be accomplished by working on your memory for only a few minutes a day.</p>
+                <p>That was the genesis for MemoryAmble. Something warm, patient, and genuinely useful — that made him feel capable, not tested.</p>
                 <p>If you have someone in your life like my father — or if you are that person — this was built for you.</p>
                 <p className="text-lg text-muted-foreground leading-relaxed mt-4">If any of this sounds familiar — I think you'll like what we built.</p>
                 <p className="font-medium text-gray-800">— Jay</p>
               </div>
             </div>
           </div>
+          <p className="text-xs text-muted-foreground italic text-center mt-2">My dad and his granddaughters</p>
         </section>
 
         {/* SECTION 9 — PRICING */}
