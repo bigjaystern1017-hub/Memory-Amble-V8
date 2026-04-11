@@ -638,9 +638,11 @@ export default function Amble() {
           });
           const data = await resp.json();
           playSound("practice-correct");
+          playSound("celebration");
           await showTimbukWithTypewriter(data.confirmation || recallFallback);
         } catch {
           playSound("practice-correct");
+          playSound("celebration");
           await showTimbukWithTypewriter(recallFallback);
         }
         // Now show the practice-success message and continue button

@@ -1,4 +1,4 @@
-type SoundName = "click" | "send" | "transition" | "magic-transition" | "correct" | "practice-correct" | "complete" | "penguin" | "incorrect" | "wisdom";
+type SoundName = "click" | "send" | "transition" | "magic-transition" | "correct" | "practice-correct" | "complete" | "penguin" | "incorrect" | "wisdom" | "celebration";
 
 interface SoundConfig {
   url: string;
@@ -36,6 +36,7 @@ const allUrls = new Set(
     cfg ? (cfg.extra ? [cfg.url, cfg.extra.url] : [cfg.url]) : []
   )
 );
+allUrls.add("/sounds/hawaiian-guitar.mp3");
 allUrls.forEach(preload);
 
 function playUrl(url: string, volume: number): void {
@@ -50,6 +51,28 @@ function playUrl(url: string, volume: number): void {
 }
 
 export function playSound(name: SoundName): void {
+  if (name === "celebration") {
+    try {
+      const base = preloaded.get("/sounds/hawaiian-guitar.mp3");
+      const clone = base ? (base.cloneNode() as HTMLAudioElement) : new Audio("/sounds/hawaiian-guitar.mp3");
+      clone.volume = 0.25;
+      clone.play().catch(() => {});
+      setTimeout(() => {
+        const fadeOut = setInterval(() => {
+          if (clone.volume > 0.05) {
+            clone.volume = Math.max(0, clone.volume - 0.05);
+          } else {
+            clearInterval(fadeOut);
+            clone.pause();
+            clone.currentTime = 0;
+          }
+        }, 50);
+      }, 2500);
+    } catch {
+      // fail silently
+    }
+    return;
+  }
   const cfg = SOUND_MAP[name];
   if (!cfg) return;
   playUrl(cfg.url, cfg.volume);
