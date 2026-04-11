@@ -1,0 +1,57 @@
+In client/src/pages/landing.tsx, make these exact copy changes and additions. Do not change any layout, styling, or structure — text swaps only plus four new CTA button blocks.
+CHANGE 1 — Find: Your brain remembers more than you think. in the badge/pill element near the top of the hero. Wait — find: Used by memory champions for 2,500 years Replace with: Your brain remembers more than you think.
+CHANGE 2 — Find: Ten minutes a day. A technique used by scholars and memory champions for millennia. Guided by Timbuk — your warm, wise personal memory coach. Replace with: Ten minutes a day. The ancient memory technique used by scholars for millennia — now guided, personal, and surprisingly fun.
+CHANGE 3 — Find all instances of Start My Free Day Replace each with: Try Day 1 Free
+CHANGE 4 — Find: Day 1 is completely free. No card needed. Replace with these two lines:
+tsx<p className="text-sm text-muted-foreground">No card needed. Just come see.</p>
+<p className="text-sm text-muted-foreground italic">Complete Day 1 and unlock your free week.</p>
+CHANGE 5 — Find: this should be available to everyone — not just those who can afford a private coach Wait — find: the people who need this most shouldn't have to pay what only some people can afford Replace with: this should be available to everyone — not just those who can afford a private coach
+CHANGE 6 — Find: What people are saying Replace with: They were skeptical too.
+CHANGE 7 — Find: MemoryAmble started with one person. Replace with: I built this for one person first.
+CHANGE 8 — Find the founder story closing line. After the final line of the story (ending with "this was built for you.") add:
+tsx<p className="text-lg text-muted-foreground leading-relaxed mt-4">If any of this sounds familiar — I think you'll like what we built.</p>
+CHANGE 9 — Find: Simple pricing Replace with: Priced for everyone. Because it should be.
+CHANGE 10 — Find the standard tier features list. Reorder to exactly:
+
+30-day guided memory bootcamp
+Daily sessions with Timbuk
+Streak tracking
+Round up to donate to memory research
+Your Amble Scroll after every session
+
+CHANGE 11 — Find: © 2025 MemoryAmble Replace with: © 2026 MemoryAmble
+CHANGE 12 — Find: brightermindlabs@outlook.com Replace with: hello@memoryamble.com
+NEW CTA BLOCKS — Add the following CTA button blocks in these four locations. Use the same Button component and styling as existing CTA buttons on the page:
+After the stats/social proof bar section, add:
+tsx<div className="text-center py-8">
+  <Button size="lg" onClick={() => navigate("/amble")} style={{backgroundColor: '#7C3AED', color: 'white'}} className="gap-2 text-lg px-8">
+    Start Free Today →
+  </Button>
+  <p className="text-sm text-muted-foreground mt-2">No card. No commitment.</p>
+</div>
+After the How It Works section, add:
+tsx<div className="text-center py-8">
+  <Button size="lg" onClick={() => navigate("/amble")} style={{backgroundColor: '#7C3AED', color: 'white'}} className="gap-2 text-lg px-8">
+    Try the Technique Free
+  </Button>
+  <p className="text-sm text-muted-foreground mt-2">Day 1 is on us.</p>
+</div>
+After the Meet Timbuk section, add:
+tsx<div className="text-center py-8">
+  <Button size="lg" onClick={() => navigate("/amble")} style={{backgroundColor: '#7C3AED', color: 'white'}} className="gap-2 text-lg px-8">
+    Meet Timbuk — Day 1 is Free
+  </Button>
+  <p className="text-sm text-muted-foreground mt-2">No card needed. Just come see.</p>
+</div>
+After the Testimonials section, add:
+tsx<div className="text-center py-8">
+  <Button size="lg" onClick={() => navigate("/amble")} style={{backgroundColor: '#7C3AED', color: 'white'}} className="gap-2 text-lg px-8">
+    Try Day 1 Free — No Card Needed
+  </Button>
+  <p className="text-sm text-muted-foreground mt-2">Complete Day 1 and unlock your free week.</p>
+</div>
+CHANGE 13 — Find: When you're ready — Day 1 is completely free. No card needed. Replace with:
+tsx<p className="text-lg text-muted-foreground">When you're ready — Day 1 is on us.</p>
+<p className="text-lg text-muted-foreground italic">Complete Day 1 and unlock your free week.</p>
+Find: Founding member pricing available now — this rate won't last forever. Replace with: We're still in our founding phase. This pricing won't be available forever — but there's no rush right now.
+Do not change anything else.

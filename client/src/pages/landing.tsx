@@ -24,7 +24,7 @@ export default function Landing() {
     setCurrentDay(localDay ? parseInt(localDay, 10) : 1);
   }, []);
 
-  const ctaLabel = currentDay > 1 ? `Continue Day ${currentDay}` : "Start My Free Day";
+  const ctaLabel = currentDay > 1 ? `Continue Day ${currentDay}` : "Try Day 1 Free";
 
   return (
     <div className="min-h-dvh bg-white font-sans">
@@ -125,7 +125,7 @@ export default function Landing() {
           <div className="max-w-2xl mx-auto">
             <hr className="border-gray-200 mb-8" />
             <p className="text-lg md:text-xl text-gray-700 leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
-              Memory training courses run $1,200 to $3,000. Private memory coaches charge more. We priced MemoryAmble at $8.47 a month deliberately — not because it's worth less, but because we believe the people who need this most shouldn't have to pay what only some people can afford. A portion of every subscription funds Alzheimer's and Sanfilippo research. The more people we reach, the more we can fund the fight.
+              Memory training courses run $1,200 to $3,000. Private memory coaches charge more. We priced MemoryAmble at $8.47 a month deliberately — not because it's worth less, but because we believe this should be available to everyone — not just those who can afford a private coach. A portion of every subscription funds Alzheimer's and Sanfilippo research. The more people we reach, the more we can fund the fight.
             </p>
             <hr className="border-gray-200 mt-8" />
           </div>
@@ -263,7 +263,7 @@ export default function Landing() {
                   className="w-full py-3 rounded-xl text-white font-semibold hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: PURPLE }}
                 >
-                  Start My Free Day
+                  Try Day 1 Free
                 </button>
               </div>
 
