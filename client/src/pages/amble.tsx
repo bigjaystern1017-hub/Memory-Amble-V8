@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
+import timbukAvatarPath from "@assets/timbuk-avatar_1773957235129.png";
 import { ChatMessage } from "@/components/chat-message";
 import { ChatInput } from "@/components/chat-input";
 import { EducationSlides } from "@/components/education-slides";
@@ -171,7 +172,7 @@ export default function Amble() {
     return false;
   };
 
-  const [phase, setPhase] = useState<"loading" | "education" | "name" | "chat" | "results" | "paywall">("loading");
+  const [phase, setPhase] = useState<"loading" | "education" | "name" | "reviewing" | "chat" | "results" | "paywall">("loading");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentBeat, setCurrentBeat] = useState<BeatId>("welcome");
@@ -1078,17 +1079,19 @@ export default function Amble() {
     s.userName = enteredName;
     s.lessonConfig = lesson;
     s.itemCount = lesson.itemCount;
-    // Cap itemCount to actual palace size for Days 2+
     if (s.stops && s.stops.length > 0) {
       s.itemCount = Math.min(s.itemCount, s.stops.length);
     }
     s.category = lesson.category;
     s.dayCount = progressData.dayCount;
     updateState(s);
-    setPhase("chat");
+    setPhase("reviewing");
     setTimeout(() => {
-      advanceBeatRef.current("welcome", s);
-    }, 200);
+      setPhase("chat");
+      setTimeout(() => {
+        advanceBeatRef.current("welcome", s);
+      }, 200);
+    }, 2500);
   }, [progressData, updateState]);
 
   const handleContinue = useCallback(async () => {
@@ -1579,6 +1582,37 @@ export default function Amble() {
         </header>
         <div className="flex-1 overflow-y-auto">
           <NameEntry onSubmit={handleNameSubmit} />
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "reviewing") {
+    return (
+      <div className="flex flex-col items-center justify-center h-dvh bg-background px-4">
+        <div className="text-center space-y-6 max-w-sm">
+          <img
+            src={timbukAvatarPath}
+            alt="Timbuk"
+            className="w-20 h-20 rounded-full mx-auto"
+          />
+          <div className="space-y-2">
+            <p className="font-serif text-xl text-foreground">
+              One moment, {state.userName}...
+            </p>
+            <p className="text-sm text-muted-foreground italic">
+              Timbuk is reviewing your answers.
+            </p>
+          </div>
+          <div className="flex justify-center gap-2">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-2 h-2 rounded-full bg-primary animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     );

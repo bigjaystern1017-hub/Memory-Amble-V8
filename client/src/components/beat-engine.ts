@@ -454,8 +454,17 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
       return `Your palace is clean. Fresh. Ready for today.`;
     }
 
-    case "onboard-welcome":
-      return `Ah, ${name}! What a pleasure — I am so happy to meet you. I am Timbuk and I would be honored to be your guide on this journey. Today we are going to build something really special — your very own Memory Palace — a technique that has been around for thousands of years, and honestly? It is a lot of fun. Shall we get started? Oh — and I have a small surprise waiting for you at the end.`;
+    case "onboard-welcome": {
+      const goal = typeof window !== 'undefined' ? localStorage.getItem('memoryamble-goal') : null;
+      const goalLine = goal === 'names'
+        ? `Names and faces are one of my favourite things to work on. You are going to surprise yourself.`
+        : goal === 'sharp'
+        ? `Staying sharp for the people you love — that is exactly the right reason to be here.`
+        : goal === 'active'
+        ? `Keeping your mind active and strong. That is why I am here too.`
+        : `Curiosity is how every great memory palace begins. Let us see what happens.`;
+      return `Ah, ${name}! What a pleasure — I am so happy to meet you. I am Timbuk and I would be honored to be your guide on this journey. ${goalLine} Today we are going to build something really special — your very own Memory Palace. Shall we get started? Oh — and I have a small surprise waiting for you at the end.`;
+    }
 
     case "onboard-skill":
       return `Fantastic — I was hoping you would say that. Before we begin, one important thing. Memory is not fixed. It is a skill — like playing piano or riding a bike. And like any skill it can be trained and improved. Which is exactly why I am so excited to work with you today. ${name}, I have a question. Is there a place you know so well you could walk through it with your eyes closed? Your home, a garden, somewhere you have been a thousand times? Tell me — where shall we walk today?`;

@@ -1,4 +1,6 @@
-import { useState } from "react";
+Make these changes across three files to replace the education slides with a personalized yes-ladder onboarding flow.
+FILE 1 — Rewrite client/src/components/education-slides.tsx completely:
+tsximport { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
@@ -168,3 +170,85 @@ export function EducationSlides({ onComplete }: EducationSlidesProps) {
     </div>
   );
 }
+
+FILE 2 — In client/src/pages/amble.tsx:
+Add a new phase called "reviewing" to the phase state type. Find:
+typescriptconst [phase, setPhase] = useState<"loading" | "education" | "name" | "chat" | "results" | "paywall">("loading");
+Replace with:
+typescriptconst [phase, setPhase] = useState<"loading" | "education" | "name" | "reviewing" | "chat" | "results" | "paywall">("loading");
+Find the handleNameSubmit function. At the end of it, instead of directly setting phase to "chat", change it to set phase to "reviewing" first, then after a 2.5 second delay set phase to "chat" and start the session. Replace the current handleNameSubmit with:
+typescriptconst handleNameSubmit = useCallback((enteredName: string) => {
+  localStorage.setItem("memory-amble-name", enteredName);
+  const lesson = getLessonConfig(
+    progressData.currentLevel,
+    progressData.dayCount,
+    progressData.currentCategory as "objects" | "names"
+  );
+  const s = createFreshState();
+  s.userName = enteredName;
+  s.lessonConfig = lesson;
+  s.itemCount = lesson.itemCount;
+  if (s.stops && s.stops.length > 0) {
+    s.itemCount = Math.min(s.itemCount, s.stops.length);
+  }
+  s.category = lesson.category;
+  s.dayCount = progressData.dayCount;
+  updateState(s);
+  setPhase("reviewing");
+  setTimeout(() => {
+    setPhase("chat");
+    setTimeout(() => {
+      advanceBeatRef.current("welcome", s);
+    }, 200);
+  }, 2500);
+}, [progressData, updateState]);
+Add this new phase render block, placed just before the if (phase === "chat") block:
+tsxif (phase === "reviewing") {
+  return (
+    <div className="flex flex-col items-center justify-center h-dvh bg-background px-4">
+      <div className="text-center space-y-6 max-w-sm">
+        <img
+          src={timbukAvatarPath}
+          alt="Timbuk"
+          className="w-20 h-20 rounded-full mx-auto"
+        />
+        <div className="space-y-2">
+          <p className="font-serif text-xl text-foreground">
+            One moment, {state.userName}...
+          </p>
+          <p className="text-sm text-muted-foreground italic">
+            Timbuk is reviewing your answers.
+          </p>
+        </div>
+        <div className="flex justify-center gap-2">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="w-2 h-2 rounded-full bg-primary animate-bounce"
+              style={{ animationDelay: `${i * 0.15}s` }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+Also add this import near the top of amble.tsx if it doesn't already exist:
+typescriptimport timbukAvatarPath from "@assets/timbuk-avatar_1773957235129.png";
+
+FILE 3 — In client/src/components/beat-engine.ts:
+Find the onboard-welcome case in getTimbukMessage. Find this line:
+typescriptreturn `Ah, ${name}! What a pleasure...`
+Replace the entire onboard-welcome return with:
+typescriptcase "onboard-welcome": {
+  const goal = typeof window !== 'undefined' ? localStorage.getItem('memoryamble-goal') : null;
+  const goalLine = goal === 'names'
+    ? `Names and faces are one of my favourite things to work on. You are going to surprise yourself.`
+    : goal === 'sharp'
+    ? `Staying sharp for the people you love — that is exactly the right reason to be here.`
+    : goal === 'active'
+    ? `Keeping your mind active and strong. That is why I am here too.`
+    : `Curiosity is how every great memory palace begins. Let us see what happens.`;
+  return `Ah, ${name}! What a pleasure — I am so happy to meet you. I am Timbuk and I would be honored to be your guide on this journey. ${goalLine} Today we are going to build something really special — your very own Memory Palace. Shall we get started? Oh — and I have a small surprise waiting for you at the end.`;
+}
+Do not change anything else in any file.
