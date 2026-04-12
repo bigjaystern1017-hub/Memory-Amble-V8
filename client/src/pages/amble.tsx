@@ -187,6 +187,7 @@ export default function Amble() {
   const [sparkLoading, setSparkLoading] = useState(false);
   const [recallHint, setRecallHint] = useState<string | null>(null);
   const [recallHintLoading, setRecallHintLoading] = useState(false);
+  const [showSoundReminder, setShowSoundReminder] = useState(true);
   const [typewriterBusy, setTypewriterBusy] = useState(false);
   const [fastForward, setFastForward] = useState(false);
   const [showBurst, setShowBurst] = useState(false);
@@ -1822,6 +1823,18 @@ export default function Amble() {
         data-testid="chat-scroll"
       >
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-4">
+          {showSoundReminder && messages.length > 0 && (
+            <div className="max-w-3xl mx-auto px-4 md:px-6 pt-2">
+              <div
+                className="flex items-center justify-center gap-2 py-2 px-4 rounded-full bg-primary/10 border border-primary/20 text-sm text-muted-foreground cursor-pointer hover:bg-primary/15 transition-colors"
+                onClick={() => setShowSoundReminder(false)}
+              >
+                <span>🔊</span>
+                <span>Sound on — Timbuk is more fun with sound</span>
+                <span className="text-xs opacity-50 ml-1">✕</span>
+              </div>
+            </div>
+          )}
           {messages.map((msg) => (
             <ChatMessage
               key={msg.id}
