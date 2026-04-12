@@ -18,7 +18,7 @@ const openai = new OpenAI({
 
 const RANDOM_OBJECTS = [
   "guitar", "violin", "trombone", "accordion", "ladder", "ironing board",
-  "wheelbarrow", "birdbath", "garden gnome", "park bench", "mailbox", "fire hydrant",
+  "wheelbarrow", "birdbath", "garden gnome", "park bench", "mailbox", "fire truck",
   "traffic cone", "watermelon", "wedding cake", "pineapple", "lobster", "gingerbread house",
   "rocking horse", "grandfather clock", "typewriter", "jukebox", "telephone booth", "globe",
   "gramophone", "bowling ball", "trophy", "dartboard", "sunflower", "cactus",

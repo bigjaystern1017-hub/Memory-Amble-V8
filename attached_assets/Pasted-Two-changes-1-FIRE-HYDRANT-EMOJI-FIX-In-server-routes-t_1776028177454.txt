@@ -1,0 +1,130 @@
+Two changes:
+
+1. FIRE HYDRANT EMOJI FIX
+
+In server/routes.ts, find "fire hydrant" in the RANDOM_OBJECTS array and replace it with "fire truck".
+
+In client/src/components/beat-engine.ts, if "fire hydrant" exists in the ITEM_EMOJIS object, remove it. Add:
+
+"fire truck": "🚒",
+
+2. REVERSE RECALL — MAKE IT OPT-IN LIKE EXPANSION OFFER
+
+This is a design change: instead of automatically walking the palace backwards on reverse-enabled days, offer it as an optional challenge AFTER the normal forward recall is complete — just like the expansion offer on Day 2.
+
+a. In client/src/components/beat-engine.ts:
+
+   - In the "placement-intro" case, do NOT add any reverse warning. Keep the existing text as-is. We don't want to foreshadow it because now it's a surprise reward, not a surprise test.
+
+   - Find the "reverse-intro" case. Replace the return text with:
+     "You just walked that forward. Want to try something harder? Same palace, backwards — last stop first. It uses a different part of your memory. Totally optional."
+
+   - Add "reverse-intro" to the beatNeedsContinueButton function. Find the function and add beatId === "reverse-intro" to the list of beats that return true. BUT WAIT — we actually need TWO buttons here (accept/decline like expansion), not one continue button. So do NOT add it to beatNeedsContinueButton. Instead we'll handle it like the expansion offer.
+
+   - Add a new BeatId to the BeatId type: "reverse-offer". Add it to the type union at the top of the file.
+
+   - In getTimbukMessage, add a new case for "reverse-offer":
+     case "reverse-offer": {
+       const count = state.correctCount;
+       const total = state.itemCount;
+       if (count === total) {
+         return `${count} out of ${total} — your palace held everything, ${name}. Want to try something harder? Same walk, backwards — last stop first. It stretches a different part of your memory.`;
+       }
+       if (count >= Math.ceil(total * 0.66)) {
+         return `${count} out of ${total} — solid walk, ${name}. Want to test yourself? Try it backwards — last stop first. Totally optional.`;
+       }
+       return `${count} out of ${total}, ${name}. Good effort. Want to try it backwards for fun? No pressure — just a bonus round.`;
+     }
+
+   - Add "reverse-offer" to beatNeedsContinueButton so it returns true (we'll use the expansion-offer style dual buttons in the UI).
+
+   - In getNextBeat, change the routing for react-recall. Currently when all recall items are done and the lesson has reverse, it goes to reverse-intro or the flow continues. Find the section in react-recall where idx >= total - 1 (all items recalled). Currently the logic checks for expansion, wisdom drop, cleaning, graduation, and final. 
+   
+     We need to add a reverse offer check. The logic should be: after all items are recalled AND the lesson config has reverse AND the user hasn't done the reverse yet, go to "reverse-offer" instead of continuing to wisdom-drop/cleaning/graduation/final.
+     
+     To track whether reverse has been offered, add a new field to ConversationState:
+     - reverseOffered: boolean (add to the interface and to createFreshState with default false)
+     - reverseAccepted: boolean (add to the interface and to createFreshState with default false)
+     
+     In getNextBeat for react-recall, when idx >= total - 1:
+     - First check: if dayCount === 1 and !expansionOffered → expansion-offer (existing logic, keep it)
+     - Second check: if lessonConfig?.reverse and !state.reverseOffered → "reverse-offer" (NEW)
+     - Then continue with existing wisdom-drop / cleaning / graduation / final logic
+
+   - In getNextBeat, add routing for "reverse-offer":
+     case "reverse-offer":
+       return "recall";
+     
+     (If accepted, it goes to recall which will now run backwards. If declined, we'll handle that in amble.tsx)
+
+   - In getContinueButtonLabel, do NOT add reverse-offer here — we'll use custom buttons in amble.tsx like the expansion offer.
+
+b. In client/src/pages/amble.tsx:
+
+   - Add handlers for the reverse offer, similar to expansion accept/decline:
+
+     const handleReverseAccept = useCallback(async () => {
+       playSound("click");
+       if (processingRef.current) return;
+       processingRef.current = true;
+       setShowContinue(false);
+       const s = stateRef.current;
+       const nextState = { ...s, reverseOffered: true, reverseAccepted: true, stepIndex: 0 };
+       updateState(nextState);
+       setCurrentBeat("recall");
+       await advanceBeatRef.current("recall", nextState);
+       processingRef.current = false;
+     }, [updateState]);
+
+     const handleReverseDecline = useCallback(async () => {
+       playSound("click");
+       if (processingRef.current) return;
+       processingRef.current = true;
+       setShowContinue(false);
+       const s = stateRef.current;
+       const nextState = { ...s, reverseOffered: true, reverseAccepted: false };
+       updateState(nextState);
+       const hasCleaning = s.lessonConfig?.cleaning === true;
+       if (!s.wisdomDropFired && s.correctCount > 0) {
+         setCurrentBeat("wisdom-drop");
+         await advanceBeatRef.current("wisdom-drop", nextState);
+       } else if (hasCleaning) {
+         setCurrentBeat("palace-wipe");
+         await advanceBeatRef.current("palace-wipe", nextState);
+       } else if (s.correctCount === s.itemCount) {
+         setCurrentBeat("graduation-offer");
+         await advanceBeatRef.current("graduation-offer", nextState);
+       } else {
+         setCurrentBeat("final");
+         await advanceBeatRef.current("final", nextState);
+       }
+       processingRef.current = false;
+     }, [updateState]);
+
+   - In the JSX, find the expansion-offer button rendering. Add a similar block for reverse-offer right after it:
+
+     showContinue && currentBeat === "reverse-offer" ? (
+       <div className="flex gap-3 justify-center">
+         <Button size="lg" onClick={handleReverseAccept} data-testid="button-reverse-accept">
+           Let's try it!
+         </Button>
+         <Button size="lg" variant="outline" onClick={handleReverseDecline} data-testid="button-reverse-decline">
+           I'm good!
+         </Button>
+       </div>
+     )
+
+     Insert this BEFORE the generic showContinue check, right after the expansion-offer check.
+
+   - The reverse recall itself already works — the isReverseRecall function and recallAssignmentIndex function in beat-engine.ts handle the backwards ordering. But currently isReverseRecall checks lessonConfig.reverse. We need it to ALSO check if the user accepted the reverse offer. Change: in beat-engine.ts, update the isReverseRecall function:
+
+     export function isReverseRecall(state: ConversationState): boolean {
+       if (state.reverseAccepted) return true;
+       return false;
+     }
+
+     This means reverse recall ONLY happens when the user opts in, never automatically. The lessonConfig.reverse flag is now just used to determine whether to OFFER the reverse, not to force it.
+
+   - After the reverse recall completes (all items recalled the second time), the flow needs to continue to wisdom-drop/cleaning/graduation/final. The existing getNextBeat logic for react-recall already handles this — when idx >= total - 1 it checks reverseOffered (which is now true) so it won't offer reverse again, and continues to the normal end-of-session flow.
+
+Do not change anything else. Do not modify routes.ts (except the fire hydrant fix). Do not change any other Timbuk copy, sound effects, or CSS.

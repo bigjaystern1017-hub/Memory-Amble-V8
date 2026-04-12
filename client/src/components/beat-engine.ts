@@ -40,6 +40,7 @@ export type BeatId =
   | "palace-buffer"
   | "walkthrough-intro"
   | "reverse-intro"
+  | "reverse-offer"
   | "recall"
   | "react-recall"
   | "wisdom-drop"
@@ -84,6 +85,8 @@ export interface ConversationState {
   sessionOpenerGreeting: string;
   expansionOffered: boolean;
   expansionAccepted: boolean;
+  reverseOffered: boolean;
+  reverseAccepted: boolean;
   baseCorrectCount: number;
   baseItemCount?: number;
 }
@@ -91,7 +94,7 @@ export interface ConversationState {
 export const SMART_CONFIRM = "__SMART_CONFIRM__";
 
 export function isReverseRecall(state: ConversationState): boolean {
-  return state.lessonConfig?.reverse === true;
+  return state.reverseAccepted === true;
 }
 
 export function recallAssignmentIndex(stepIndex: number, state: ConversationState): number {
@@ -175,6 +178,7 @@ const ITEM_EMOJIS: Record<string, string> = {
   "sunflower": "🌻",
   "cactus": "🌵",
   "beehive": "🐝",
+  "fire truck": "🚒",
   "fishing rod": "🎣",
   "anchor": "⚓",
   "canoe": "🛶",
@@ -944,6 +948,9 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
       return "recall";
 
     case "reverse-intro":
+      return "reverse-offer";
+
+    case "reverse-offer":
       return "recall";
 
     case "recall":
@@ -953,6 +960,7 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
       console.log(`react-recall: idx=${idx}, total=${total}, correctCount=${state.correctCount}`);
       if (idx < total - 1) return "recall";
       if (state.dayCount === 1 && !state.expansionOffered) return "expansion-offer";
+      if (state.lessonConfig?.reverse && !state.reverseOffered) return "reverse-offer";
       if (!state.wisdomDropFired && state.correctCount > 0) return "wisdom-drop";
       if (hasCleaning) return "palace-wipe";
       if (state.correctCount === total) return "graduation-offer";

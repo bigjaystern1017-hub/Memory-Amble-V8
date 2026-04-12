@@ -1200,6 +1200,44 @@ export default function Amble() {
     processingRef.current = false;
   }, [updateState]);
 
+  const handleReverseAccept = useCallback(async () => {
+    playSound("click");
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setShowContinue(false);
+    const s = stateRef.current;
+    const nextState = { ...s, reverseOffered: true, reverseAccepted: true, stepIndex: 0 };
+    updateState(nextState);
+    setCurrentBeat("recall");
+    await advanceBeatRef.current("recall", nextState);
+    processingRef.current = false;
+  }, [updateState]);
+
+  const handleReverseDecline = useCallback(async () => {
+    playSound("click");
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setShowContinue(false);
+    const s = stateRef.current;
+    const nextState = { ...s, reverseOffered: true, reverseAccepted: false };
+    updateState(nextState);
+    const hasCleaning = s.lessonConfig?.cleaning === true;
+    if (!s.wisdomDropFired && s.correctCount > 0) {
+      setCurrentBeat("wisdom-drop");
+      await advanceBeatRef.current("wisdom-drop", nextState);
+    } else if (hasCleaning) {
+      setCurrentBeat("palace-wipe");
+      await advanceBeatRef.current("palace-wipe", nextState);
+    } else if (s.correctCount === s.itemCount) {
+      setCurrentBeat("graduation-offer");
+      await advanceBeatRef.current("graduation-offer", nextState);
+    } else {
+      setCurrentBeat("final");
+      await advanceBeatRef.current("final", nextState);
+    }
+    processingRef.current = false;
+  }, [updateState]);
+
   const handleRetry = useCallback(async () => {
     if (processingRef.current) return;
     processingRef.current = true;
@@ -1919,6 +1957,15 @@ export default function Amble() {
                 data-testid="button-expansion-decline"
               >
                 That's a win!
+              </Button>
+            </div>
+          ) : showContinue && currentBeat === "reverse-offer" ? (
+            <div className="flex gap-3 justify-center">
+              <Button size="lg" onClick={handleReverseAccept} data-testid="button-reverse-accept">
+                Let's try it!
+              </Button>
+              <Button size="lg" variant="outline" onClick={handleReverseDecline} data-testid="button-reverse-decline">
+                I'm good!
               </Button>
             </div>
           ) : showContinue ? (
