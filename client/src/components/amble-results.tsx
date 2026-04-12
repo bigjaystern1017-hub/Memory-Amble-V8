@@ -180,6 +180,7 @@ export function AmbleResults({
   const isGraduation = currentDay === 7 && correctCount >= totalItems * 0.8;
 
   const [showConversion, setShowConversion] = useState(false);
+  const [shareButtonText, setShareButtonText] = useState("Share My Scroll");
   const [authMode, setAuthMode] = useState<"choice" | "email">("choice");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -641,36 +642,23 @@ export function AmbleResults({
                     className="w-full gap-2"
                     onClick={() => {
                       playSound("click");
-                      const text = `Timbuk just wrote me an Amble Scroll after my memory training session 😄 Build your own → MemoryAmble.com`;
-                      window.open(`https://www.facebook.com/sharer/sharer.php?u=https://memoryamble.com&quote=${encodeURIComponent(text)}`, "_blank");
+                      const shareText = `${scrollText}\n\nBuild your own Memory Palace → MemoryAmble.com`;
+                      if (navigator.share) {
+                        navigator.share({
+                          title: `My Amble Scroll — ${displayName}`,
+                          text: shareText,
+                        }).catch(() => {});
+                        return;
+                      }
+                      navigator.clipboard.writeText(shareText).then(() => {
+                        setShareButtonText("Copied!");
+                        setTimeout(() => setShareButtonText("Share My Scroll"), 2000);
+                      }).catch(() => {});
                     }}
-                    data-testid="button-share-facebook"
+                    data-testid="button-share-scroll"
                   >
-                    Share to Facebook
+                    {shareButtonText}
                   </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full gap-2"
-                    onClick={() => {
-                      playSound("click");
-                      const text = `Timbuk just wrote me an Amble Scroll after my memory training session 😄 Build your own → MemoryAmble.com`;
-                      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-                    }}
-                    data-testid="button-share-whatsapp"
-                  >
-                    Send via WhatsApp
-                  </Button>
-                  <button
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={() => {
-                      playSound("click");
-                      navigator.clipboard.writeText("https://memoryamble.com?ref=scroll");
-                    }}
-                    data-testid="button-copy-link"
-                  >
-                    Copy link
-                  </button>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Your scroll is yours. We don't post anything without your tap.
