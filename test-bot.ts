@@ -111,12 +111,12 @@ interface LessonConfig {
 function getLessonConfig(dayCount: number): LessonConfig {
   const configs: Record<number, LessonConfig> = {
     0: { title: "The Foundation", focus: "Building your first palace", itemCount: 3, category: "objects", cleaning: false, reverse: false },
-    1: { title: "Expanding the Palace", focus: "Adding more stops", itemCount: 3, category: "objects", cleaning: true, reverse: false },
-    2: { title: "The Reverse Walk", focus: "Walking backwards", itemCount: 5, category: "objects", cleaning: true, reverse: true },
-    3: { title: "Growing Stronger", focus: "8 items", itemCount: 8, category: "objects", cleaning: true, reverse: false },
-    4: { title: "Real Life", focus: "Practical items", itemCount: 8, category: "practical", cleaning: true, reverse: false },
-    5: { title: "Names & Faces", focus: "Remembering names", itemCount: 8, category: "names", cleaning: false, reverse: false },
-    6: { title: "Graduation", focus: "The big finish", itemCount: 10, category: "objects", cleaning: true, reverse: true },
+    1: { title: "Settling In", focus: "Cleaning and rebuilding", itemCount: 3, category: "objects", cleaning: true, reverse: false },
+    2: { title: "Stretching", focus: "More items, walking backwards", itemCount: 5, category: "objects", cleaning: true, reverse: true },
+    3: { title: "Finding Your Stride", focus: "Strengthening the palace", itemCount: 5, category: "objects", cleaning: true, reverse: false },
+    4: { title: "Growing Stronger", focus: "A bigger palace", itemCount: 8, category: "objects", cleaning: true, reverse: false },
+    5: { title: "The Full Walk", focus: "Forward and backward", itemCount: 8, category: "objects", cleaning: true, reverse: true },
+    6: { title: "Graduation", focus: "The big finish", itemCount: 8, category: "objects", cleaning: true, reverse: true },
   };
   return configs[dayCount] || configs[0];
 }
