@@ -1,0 +1,46 @@
+Simplify the curriculum to use objects only — remove names and practical item categories entirely. This is a methodology decision: the memory palace technique works best with vivid visual objects, and switching to abstract tasks or names breaks the flow for seniors.
+
+1. In shared/curriculum.ts, replace the entire curriculum with this progression. Every day uses category "objects". The structure should follow this pattern:
+
+Day 1 (dayCount 0): 3 items, no cleaning, no reverse. Title: "The Foundation". Focus: "Building your first palace"
+Day 2 (dayCount 1): 3 items, cleaning, no reverse. Title: "Settling In". Focus: "Cleaning and rebuilding"
+Day 3 (dayCount 2): 5 items, cleaning, reverse. Title: "Stretching". Focus: "More items, walking backwards"
+Day 4 (dayCount 3): 5 items, cleaning, no reverse. Title: "Finding Your Stride". Focus: "Strengthening the palace"
+Day 5 (dayCount 4): 8 items, cleaning, no reverse. Title: "Growing Stronger". Focus: "A bigger palace"
+Day 6 (dayCount 5): 8 items, cleaning, reverse. Title: "The Full Walk". Focus: "Forward and backward"
+Day 7 (dayCount 6): 8 items, cleaning, reverse. Title: "Graduation". Focus: "The big finish"
+Day 8 (dayCount 7): 8 items, cleaning, no reverse. Title: "Week 2 Begins". Focus: "Back to work"
+Day 9 (dayCount 8): 8 items, cleaning, reverse. Title: "Sharpening". Focus: "Keeping the edge"
+Day 10 (dayCount 9): 10 items, cleaning, no reverse. Title: "Double Digits". Focus: "Ten stops"
+Day 11 (dayCount 10): 10 items, cleaning, no reverse. Title: "Building Stamina". Focus: "Longer walks"
+Day 12 (dayCount 11): 10 items, cleaning, reverse. Title: "The Long Walk". Focus: "Ten stops, both ways"
+Day 13 (dayCount 12): 10 items, cleaning, no reverse. Title: "Steady". Focus: "Consistency"
+Day 14 (dayCount 13): 10 items, cleaning, reverse. Title: "Week 2 Graduation". Focus: "Two weeks strong"
+Day 15-20 (dayCount 14-19): 12 items, cleaning, alternating reverse (15 no, 16 yes, 17 no, 18 yes, 19 no, 20 yes). Titles: "The Deep Palace" series. Focus: "Twelve stops"
+Day 21-30 (dayCount 20-29): 12 items, cleaning, alternating reverse. Titles: "The Daily Walk" series. Focus: "Your daily practice"
+
+ALL days should have category: "objects". No day should ever use "names" or "practical".
+
+Make sure the curriculum export format matches whatever the existing code expects — if it's an array indexed by dayCount, keep that format. If it's a function, keep that format. Just change the content.
+
+2. In server/routes.ts, the PRACTICAL_ITEMS array and RANDOM_NAMES array can stay in the file (don't delete them in case we want them later) but they should never be selected. Find the /api/assign-objects endpoint. The category selection logic currently picks from RANDOM_OBJECTS, RANDOM_NAMES, or PRACTICAL_ITEMS based on the category parameter. Since the curriculum will now always send "objects", this will naturally always pick RANDOM_OBJECTS. No change needed here, but verify that's how it works.
+
+3. In client/src/components/beat-engine.ts, the welcome messages for Days 5 and 6 currently reference practical items and names specifically:
+   - Day 5 talks about "real life" items and "groceries, appointments"
+   - Day 6 talks about "names" and "a dinner party"
+   
+   Replace the Day 5 welcome messages (all three score variants) with messages about stepping up to 8 items. Something like:
+   - Perfect: "Five days in — and yesterday you were flawless. Today we go bigger. Eight stops, eight items. Your palace is ready for this. I have a small surprise waiting for you at the end."
+   - Good: "Five days in and you are doing beautifully. Today we push further — eight items. Your palace can handle it. I have a small surprise waiting for you at the end."
+   - Low: "Five days. Showing up every day IS the training. Today we try eight items. I think the bigger palace is going to surprise you. I have a small surprise waiting for you at the end."
+
+   Replace the Day 6 welcome messages (all three score variants) with messages about the full forward-and-backward walk:
+   - Perfect: "Six days, ${name}. Yesterday was remarkable. Today we walk the full palace — eight items, forward and backward. You are ready. I have a small surprise waiting for you at the end."
+   - Good: "Six days in and your palace is growing stronger. Today we do the full walk — forward and backward. I have a small surprise waiting for you at the end."
+   - Low: "Six days — that is something to be proud of. Today we try the full walk, forward and backward. A fresh challenge. I have a small surprise waiting for you at the end."
+
+4. In the progress module (client/src/lib/progress.ts), there may be a shouldSwitchCategory function or category switching logic. Make sure it always returns "objects" regardless of day count. Find the function and simplify it to just return "objects".
+
+5. In beat-engine.ts, the placement-intro, place-object, and recall beats have special paths for isNames and cat === "practical". These can stay in the code (they won't trigger since category is always "objects") but verify they won't cause issues.
+
+Do not change anything else. Do not modify sound effects, routing logic, UI components, or any other Timbuk copy beyond the Day 5 and Day 6 welcome messages specified above.

@@ -39,11 +39,8 @@ export function getNextLevel(currentLevel: number, lastScore: number, lastTotal:
   return currentLevel;
 }
 
-export function shouldSwitchCategory(dayCount: number, currentCategory: "objects" | "names"): "objects" | "names" {
-  if (currentCategory === "objects" && dayCount >= 7) {
-    return "names";
-  }
-  return currentCategory;
+export function shouldSwitchCategory(_dayCount: number, _currentCategory: "objects" | "names"): "objects" | "names" {
+  return "objects";
 }
 
 export function getGuestProgressFromDay(day: number): ProgressData {
