@@ -1,0 +1,93 @@
+Make MemoryAmble installable as a Progressive Web App so users can add it to their phone's home screen. This requires three things:
+
+1. Create a new file: client/public/manifest.json
+
+{
+  "name": "MemoryAmble",
+  "short_name": "MemoryAmble",
+  "description": "A sharper memory. Starting today.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7C3AED",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
+2. Generate the icon files. Create a simple Node script that generates two PNG icons (192x192 and 512x512) — purple rounded square with a white brain emoji, matching the favicon. Save them as client/public/icon-192.png and client/public/icon-512.png. Use the canvas package to generate them:
+
+const { createCanvas } = require('canvas');
+
+function generateIcon(size, filename) {
+  const canvas = createCanvas(size, size);
+  const ctx = canvas.getContext('2d');
+  
+  // Purple rounded rectangle
+  const radius = size * 0.2;
+  ctx.fillStyle = '#7C3AED';
+  ctx.beginPath();
+  ctx.moveTo(radius, 0);
+  ctx.lineTo(size - radius, 0);
+  ctx.quadraticCurveTo(size, 0, size, radius);
+  ctx.lineTo(size, size - radius);
+  ctx.quadraticCurveTo(size, size, size - radius, size);
+  ctx.lineTo(radius, size);
+  ctx.quadraticCurveTo(0, size, 0, size - radius);
+  ctx.lineTo(0, radius);
+  ctx.quadraticCurveTo(0, 0, radius, 0);
+  ctx.fill();
+  
+  // White brain emoji text
+  ctx.fillStyle = 'white';
+  ctx.font = `${size * 0.5}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🧠', size / 2, size / 2);
+  
+  const fs = require('fs');
+  fs.writeFileSync(filename, canvas.toBuffer('image/png'));
+}
+
+generateIcon(192, 'client/public/icon-192.png');
+generateIcon(512, 'client/public/icon-512.png');
+
+Run this script once to generate the icons. If the canvas package isn't available, install it with: npm install canvas
+
+If canvas doesn't work in Replit, an alternative approach: use simple solid purple PNG files. Create them with sharp instead:
+
+const sharp = require('sharp');
+
+async function generateIcon(size, filename) {
+  const svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${size}" height="${size}" rx="${size * 0.2}" fill="#7C3AED"/>
+    <text x="50%" y="55%" font-size="${size * 0.5}" text-anchor="middle" dominant-baseline="middle" fill="white">🧠</text>
+  </svg>`;
+  await sharp(Buffer.from(svg)).png().toFile(filename);
+}
+
+generateIcon(192, 'client/public/icon-192.png');
+generateIcon(512, 'client/public/icon-512.png');
+
+If neither canvas nor sharp work, just create two simple solid purple square PNGs manually and place them in client/public/.
+
+3. In client/index.html (the main HTML template), add these tags inside the <head>:
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#7C3AED">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MemoryAmble">
+
+4. Do NOT create a service worker — we don't need offline support and it can cause caching issues that make deployments confusing. The manifest alone is enough to make the app installable on Android. For iOS, the apple-mobile-web-app-capable meta tag handles it.
+
+Do not change anything else.
