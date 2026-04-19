@@ -690,7 +690,8 @@ CRITICAL: The user's name is provided in the user message. Use ONLY that name. N
           const { sendWelcomeEmail } = await import("./email");
           const userEmail = (req as any).user?.email;
           if (userEmail) {
-            sendWelcomeEmail(userEmail, "friend");
+            const userName = (req as any).user?.user_metadata?.full_name || (req as any).user?.user_metadata?.name || (req as any).user?.email?.split("@")[0] || "friend";
+            sendWelcomeEmail(userEmail, userName);
           }
         }
       } catch (e) {

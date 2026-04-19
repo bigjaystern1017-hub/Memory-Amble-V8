@@ -20,7 +20,7 @@ export async function sendWelcomeEmail(to: string, userName: string): Promise<vo
 
   <p>We built this for Jay's 84-year-old father — a sharp, funny man who started losing confidence in his memory. Not because anything was wrong. Just because forgetting a name at dinner can ruin your whole evening.</p>
 
-  <p>We wanted to build something that felt like a warm hand on your shoulder, not a test. That's Timbuk — your memory coach. He's waiting for you.</p>
+  <p>We wanted to build something that felt like a warm hand on your shoulder, not a test. That's Timbuk — your memory coach. He's already impressed with you.</p>
 
   <p><strong>A few things to know:</strong></p>
   <p>• Sessions take about 10 minutes. That's it.<br/>
@@ -28,7 +28,7 @@ export async function sendWelcomeEmail(to: string, userName: string): Promise<vo
   • If anything feels off or confusing, just reply to this email. A real person reads it.</p>
 
   <p style="text-align: center; margin: 32px 0;">
-    <a href="https://memoryamble.com/amble" style="background-color: #7C3AED; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-size: 16px;">Start Your First Walk</a>
+    <a href="https://memoryamble.com/amble" style="background-color: #7C3AED; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-size: 16px;">Continue Your Training</a>
   </p>
 
   <p>We're glad you're here.<br/>
