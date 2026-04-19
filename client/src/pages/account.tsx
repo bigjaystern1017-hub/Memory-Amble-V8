@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/use-auth";
@@ -5,10 +6,37 @@ import { useToast } from "@/hooks/use-toast";
 import { Brain, ArrowLeft, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+async function authFetch(path: string, options: RequestInit = {}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  return fetch(path, {
+    ...options,
+    headers: {
+      ...options.headers,
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+}
+
 export default function Account() {
   const [, navigate] = useLocation();
   const { user, displayName, signOut } = useAuth();
   const { toast } = useToast();
+
+  const [emailOptOut, setEmailOptOut] = useState(false);
+  const [progressData, setProgressData] = useState<Record<string, unknown> | null>(null);
+  const [toggleLoading, setToggleLoading] = useState(false);
+
+  useEffect(() => {
+    authFetch("/api/progress")
+      .then((res) => res.json())
+      .then((data) => {
+        setProgressData(data);
+        setEmailOptOut(data.emailOptOut === true);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleChangePassword = async () => {
     if (!user?.email) return;
@@ -24,6 +52,29 @@ export default function Account() {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleToggleEmail = async () => {
+    if (!progressData || toggleLoading) return;
+    setToggleLoading(true);
+    const newOptOut = !emailOptOut;
+    try {
+      const res = await authFetch("/api/progress", {
+        method: "POST",
+        body: JSON.stringify({ ...progressData, emailOptOut: newOptOut }),
+      });
+      if (res.ok) {
+        setEmailOptOut(newOptOut);
+        setProgressData((prev) => prev ? { ...prev, emailOptOut: newOptOut } : prev);
+        toast({
+          title: newOptOut ? "Email reminders turned off" : "Email reminders turned on",
+        });
+      }
+    } catch {
+      toast({ title: "Something went wrong", variant: "destructive" });
+    } finally {
+      setToggleLoading(false);
+    }
   };
 
   return (
@@ -70,6 +121,26 @@ export default function Account() {
               <p className="text-sm text-muted-foreground">Email</p>
               <p className="text-base font-medium" data-testid="text-email">{user?.email}</p>
             </div>
+          </div>
+
+          <div className="border rounded-lg p-4 flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <p className="text-base font-medium">Email Reminders</p>
+              <p className="text-sm text-muted-foreground">Receive daily reminders from Timbuk.</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleEmail}
+              disabled={toggleLoading || progressData === null}
+              className={`min-w-[52px] px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                emailOptOut
+                  ? "bg-muted text-muted-foreground"
+                  : "bg-primary text-primary-foreground"
+              }`}
+              data-testid="button-toggle-email"
+            >
+              {emailOptOut ? "Off" : "On"}
+            </button>
           </div>
 
           <div className="space-y-3">

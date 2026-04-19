@@ -170,6 +170,7 @@ const saveProgressSchema = z.object({
   currentLevel: z.number().min(3).max(9),
   currentCategory: z.enum(["objects", "names"]),
   dayCount: z.number().min(0),
+  emailOptOut: z.boolean().optional(),
 });
 
 const saveSessionSchema = z.object({
@@ -523,7 +524,7 @@ CRITICAL: The user's name is provided in the user message. Use ONLY that name. N
         return res.status(400).json({ error: "Invalid request" });
       }
 
-      const { currentDay, currentLevel, currentCategory, dayCount } = parsed.data;
+      const { currentDay, currentLevel, currentCategory, dayCount, emailOptOut } = parsed.data;
 
       const now = new Date();
       const [existing] = await db.select().from(userProgress).where(eq(userProgress.userId, userId));
@@ -545,16 +546,20 @@ CRITICAL: The user's name is provided in the user message. Use ONLY that name. N
           streak = 1;
         }
 
+        const updateFields: Record<string, unknown> = { currentDay, currentLevel, currentCategory, dayCount, streak, lastLogin: now };
+        if (emailOptOut !== undefined) updateFields.emailOptOut = emailOptOut;
         const [updated] = await db
           .update(userProgress)
-          .set({ currentDay, currentLevel, currentCategory, dayCount, streak, lastLogin: now })
+          .set(updateFields)
           .where(eq(userProgress.userId, userId))
           .returning();
         res.json(updated);
       } else {
+        const insertFields: Record<string, unknown> = { userId, currentDay, currentLevel, currentCategory, dayCount, streak: 1, lastLogin: now };
+        if (emailOptOut !== undefined) insertFields.emailOptOut = emailOptOut;
         const [created] = await db
           .insert(userProgress)
-          .values({ userId, currentDay, currentLevel, currentCategory, dayCount, streak: 1, lastLogin: now })
+          .values(insertFields as any)
           .returning();
         res.json(created);
       }
