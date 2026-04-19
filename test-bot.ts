@@ -229,7 +229,8 @@ async function simulateDay(botState: BotState): Promise<BotState> {
     log(`  📋 CHECK-IN RECALL (reviewing yesterday)`);
     log(DIVIDER);
 
-    logTimbuk("check-in-intro", `${BOT_CONFIG.userName}! Welcome back. Before we start today, let's take a quick stroll through your ${botState.lastPalaceName} and see what stuck from last time.`);
+    const cleanPalace = botState.lastPalaceName.toLowerCase().replace(/^your\s+/i, '').replace(/^my\s+/i, '').replace(/^the\s+/i, '').trim();
+    logTimbuk("check-in-intro", `${BOT_CONFIG.userName}! Welcome back. Before we start today, let's take a quick stroll through your ${cleanPalace} and see what stuck from last time.`);
 
     let checkInCorrect = 0;
     for (let i = 0; i < botState.lastAssignments.length; i++) {
