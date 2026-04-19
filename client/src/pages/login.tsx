@@ -18,6 +18,10 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   if (isAuthenticated) {
     navigate("/amble");
@@ -90,6 +94,17 @@ export default function Login() {
       description: "We sent you a confirmation link. Click it to finish signing up.\nDon't see it? Check your junk or spam folder.",
     });
     setLoading(false);
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) return;
+    setResetLoading(true);
+    await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: window.location.origin + "/amble",
+    });
+    setResetSent(true);
+    setResetLoading(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -185,7 +200,41 @@ export default function Login() {
             </div>
           )}
 
-          {(mode === "email-login" || mode === "email-signup") && (
+          {showReset && (
+            <div className="space-y-4" data-testid="reset-password-form">
+              {resetSent ? (
+                <p className="text-center text-sm text-muted-foreground py-4">
+                  Check your email for a reset link.
+                </p>
+              ) : (
+                <form onSubmit={handlePasswordReset} className="space-y-4">
+                  <p className="text-sm text-muted-foreground">Enter your email and we'll send you a reset link.</p>
+                  <Input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="text-lg py-5"
+                    required
+                    data-testid="input-reset-email"
+                  />
+                  <Button type="submit" size="lg" className="w-full text-lg py-6" disabled={resetLoading} data-testid="button-send-reset">
+                    {resetLoading ? "Sending..." : "Send Reset Link"}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setShowReset(false)}
+                    className="w-full text-xs text-muted-foreground hover:text-primary transition-colors"
+                    data-testid="button-cancel-reset"
+                  >
+                    Back to sign in
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {!showReset && (mode === "email-login" || mode === "email-signup") && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="email" className="text-base font-medium">
@@ -227,6 +276,16 @@ export default function Login() {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+                {mode === "email-login" && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowReset(true); setResetEmail(email); }}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors mt-1"
+                    data-testid="button-forgot-password"
+                  >
+                    Forgot password?
+                  </button>
+                )}
               </div>
 
               <Button
