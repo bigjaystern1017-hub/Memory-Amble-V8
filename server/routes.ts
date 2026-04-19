@@ -691,7 +691,7 @@ CRITICAL: The user's name is provided in the user message. Use ONLY that name. N
           const userEmail = (req as any).user?.email;
           if (userEmail) {
             const userName = (req as any).user?.user_metadata?.full_name || (req as any).user?.user_metadata?.name || (req as any).user?.email?.split("@")[0] || "friend";
-            sendWelcomeEmail(userEmail, userName);
+            sendWelcomeEmail(userEmail, userName, userId);
           }
         }
       } catch (e) {
@@ -844,7 +844,7 @@ CRITICAL: The user's name is provided in the user message. Use ONLY that name. N
         const today = new Date().toISOString().slice(0, 10);
         const lastLogin = progress.lastLogin ? new Date(progress.lastLogin).toISOString().slice(0, 10) : null;
 
-        if (lastLogin === today || progress.dayCount === 0) {
+        if (lastLogin === today || progress.dayCount === 0 || progress.emailOptOut === true) {
           skipped++;
           continue;
         }
@@ -859,7 +859,7 @@ CRITICAL: The user's name is provided in the user message. Use ONLY that name. N
           const email = userData?.user?.email;
 
           if (email) {
-            await sendReminderEmail(email, "friend", progress.dayCount, progress.streak ?? 0);
+            await sendReminderEmail(email, "friend", progress.dayCount, progress.streak ?? 0, progress.userId);
             sent++;
           } else {
             skipped++;
@@ -875,6 +875,28 @@ CRITICAL: The user's name is provided in the user message. Use ONLY that name. N
       console.error("Reminder send failed:", error);
       res.status(500).json({ error: "Failed to send reminders" });
     }
+  });
+
+  app.get("/api/unsubscribe", async (req: any, res) => {
+    const uid = req.query.uid as string;
+    if (!uid) {
+      return res.status(400).send("Missing uid parameter.");
+    }
+    try {
+      await db.update(userProgress).set({ emailOptOut: true }).where(eq(userProgress.userId, uid));
+    } catch (e) {
+      console.error("Unsubscribe failed:", e);
+    }
+    res.send(`<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Unsubscribed — MemoryAmble</title></head>
+<body style="display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:Georgia,serif;background:#fafaf9;">
+  <div style="text-align:center;max-width:480px;padding:40px 24px;">
+    <h1 style="color:#7C3AED;font-size:28px;margin-bottom:16px;">You've been unsubscribed.</h1>
+    <p style="color:#444;font-size:16px;line-height:1.6;">You've been unsubscribed from MemoryAmble emails. You can re-enable them anytime from your Account page.</p>
+  </div>
+</body>
+</html>`);
   });
 
   return httpServer;

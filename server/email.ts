@@ -2,7 +2,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function sendWelcomeEmail(to: string, userName: string): Promise<void> {
+export async function sendWelcomeEmail(to: string, userName: string, userId: string): Promise<void> {
   try {
     await resend.emails.send({
       from: "MemoryAmble <hello@memoryamble.com>",
@@ -35,6 +35,8 @@ export async function sendWelcomeEmail(to: string, userName: string): Promise<vo
   — The MemoryAmble Team</p>
 
   <p style="font-size: 13px; color: #888; margin-top: 32px; font-style: italic;">P.S. Timbuk has opinions about penguins. He'll explain.</p>
+
+  <p style="font-size: 11px; color: #aaa; margin-top: 32px;">You're receiving this because you signed up for MemoryAmble. <a href="https://memoryamble.com/api/unsubscribe?uid=${encodeURIComponent(userId)}" style="color: #aaa;">Unsubscribe</a></p>
 </div>
       `.trim(),
     });
@@ -96,7 +98,8 @@ export async function sendReminderEmail(
   to: string,
   userName: string,
   dayCount: number,
-  streak: number
+  streak: number,
+  userId: string
 ): Promise<void> {
   try {
     const { subject, bodyMessage } = getReminderTemplate(userName, dayCount, streak);
@@ -117,7 +120,7 @@ export async function sendReminderEmail(
 
   <p style="font-size: 14px; color: #666;">— Timbuk 🧙</p>
 
-  <p style="font-size: 11px; color: #aaa; margin-top: 32px;">You're receiving this because you signed up for MemoryAmble. <a href="https://memoryamble.com" style="color: #aaa;">Unsubscribe</a></p>
+  <p style="font-size: 11px; color: #aaa; margin-top: 32px;">You're receiving this because you signed up for MemoryAmble. <a href="https://memoryamble.com/api/unsubscribe?uid=${encodeURIComponent(userId)}" style="color: #aaa;">Unsubscribe</a></p>
 </div>
     `.trim();
 

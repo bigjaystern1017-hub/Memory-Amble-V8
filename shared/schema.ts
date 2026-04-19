@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { pgTable, serial, varchar, integer, timestamp, text, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, integer, timestamp, text, jsonb, boolean } from "drizzle-orm/pg-core";
 
 export * from "./models/auth";
 
@@ -20,6 +20,7 @@ export const userProgress = pgTable("user_progress", {
   streak: integer("streak").notNull().default(0),
   lastLogin: timestamp("last_login").defaultNow(),
   subscriptionStatus: text("subscription_status").notNull().default("inactive"),
+  emailOptOut: boolean("email_opt_out").notNull().default(false),
 });
 
 export const sessionHistory = pgTable("session_history", {
