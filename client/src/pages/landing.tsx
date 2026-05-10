@@ -46,7 +46,7 @@ export default function Landing() {
                 <LogOut className="w-4 h-4" /> Sign Out
               </Button>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => navigate("/login")} className="border-gray-300 text-gray-700 hidden md:inline-flex">
+              <Button variant="outline" size="sm" onClick={() => navigate("/login")} className="border-gray-300 text-gray-700">
                 Sign In
               </Button>
             )}
@@ -80,25 +80,45 @@ export default function Landing() {
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight text-gray-900" style={{ fontFamily: "Lora, serif" }}>
                 A Brighter Mind. Sharper Memory.<br />10 Minutes a Day.
               </h1>
-              <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
-                MemoryAmble teaches the ancient memory palace technique in a calm, warm, visual way designed for curious adults.
+              <p className="text-lg md:text-xl text-gray-500 leading-relaxed">
+                Ten minutes a day. The ancient memory technique used by scholars for millennia — now guided, personal, and surprisingly fun.
               </p>
-              <div className="pt-3">
-                <button data-testid="button-cta-hero" onClick={() => navigate("/amble")} className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5" style={{ backgroundColor: PURPLE }}>
-                  {ctaLabel} <ArrowRight size={18} />
+              <div className="pt-2">
+                <button
+                  onClick={() => { playSound("click"); navigate("/amble"); }}
+                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-white text-lg font-semibold shadow-sm hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: PURPLE }}
+                >
+                  Try Day 1 Free <ArrowRight className="w-5 h-5" />
                 </button>
-                <p className="mt-3 text-sm text-gray-500">No card. No pressure. Start with Day 1.</p>
               </div>
+              <p className="text-sm text-muted-foreground">No card needed. Just come see.</p>
+              <p className="text-sm text-muted-foreground italic">Complete Day 1 and unlock your free week.</p>
             </div>
           </div>
         </section>
 
-        {/* SECTION 3 — VALUE PROP */}
-        <section className="py-14 md:py-20 px-4 md:px-8 bg-gray-50">
-          <div className="max-w-5xl mx-auto grid gap-6 md:grid-cols-3">
-            <StepCard number="1" title="Choose a place" text="Pick a real place you know well. That becomes your memory palace." icon={House} />
-            <StepCard number="2" title="Add vivid images" text="Timbuk gives you objects to place. You make them bold and memorable." icon={Sparkles} />
-            <StepCard number="3" title="Walk and recall" text="Mentally walk through your palace and the items come back with it." icon={Brain} />
+        {/* SECTION 3 — SOCIAL PROOF BAR */}
+        <section className="py-8 px-4 bg-gray-50 border-y border-gray-100">
+          <div className="max-w-3xl mx-auto grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-3xl font-bold text-gray-900">2,500+</p>
+              <p className="text-sm text-gray-500 mt-1">Years of science</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-gray-900">10 min</p>
+              <p className="text-sm text-gray-500 mt-1">Per day</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-gray-900">7 days</p>
+              <p className="text-sm text-gray-500 mt-1">To your first palace</p>
+            </div>
+          </div>
+          <div className="text-center py-8">
+            <Button size="lg" onClick={() => { playSound("click"); navigate("/amble"); }} style={{backgroundColor: '#7C3AED', color: 'white'}} className="gap-2 text-lg px-8">
+              Start Free Today →
+            </Button>
+            <p className="text-sm text-muted-foreground mt-2">No card. No commitment.</p>
           </div>
         </section>
 
@@ -301,7 +321,44 @@ export default function Landing() {
             </div>
           </div>
         </section>
+
+        {/* SECTION 11 — FINAL CTA */}
+        <section className="py-16 md:py-24 px-4 md:px-8 bg-white text-center">
+          <div className="max-w-2xl mx-auto space-y-5">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900" style={{ fontFamily: "Lora, serif" }}>Your memory is waiting.</h2>
+            <p className="text-lg text-muted-foreground">When you're ready — Day 1 is on us.</p>
+            <p className="text-lg text-muted-foreground italic">Complete Day 1 and unlock your free week.</p>
+            <div className="pt-2">
+              <button
+                onClick={() => { playSound("click"); navigate("/amble"); }}
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-white text-lg font-semibold shadow-sm hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: PURPLE }}
+              >
+                {ctaLabel} <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-400">We're still in our founding phase. This pricing won't be available forever — but there's no rush right now.</p>
+          </div>
+        </section>
+
       </main>
+
+      {/* FOOTER */}
+      <footer className="border-t border-gray-100 py-6 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-gray-400">
+          <span>© 2026 MemoryAmble</span>
+          <span className="text-center">Built with care for those who deserve a sharper mind.</span>
+          <a href="mailto:hello@memoryamble.com" className="hover:text-gray-600 transition-colors">
+            hello@memoryamble.com
+          </a>
+        </div>
+        <div className="max-w-5xl mx-auto flex items-center justify-center gap-3 mt-3 text-sm text-gray-400">
+          <a href="/privacy" className="underline hover:text-gray-600 transition-colors">Privacy Policy</a>
+          <span>·</span>
+          <a href="/terms" className="underline hover:text-gray-600 transition-colors">Terms of Service</a>
+        </div>
+      </footer>
+
     </div>
   );
 }
