@@ -464,7 +464,9 @@ export function getTimbukMessage(beatId: BeatId, state: ConversationState): stri
         : goal === 'active'
         ? `Keeping your mind active. That is why I am here too.`
         : `Curiosity is how every great palace begins.`;
-      return `Ah, ${name}! I am Timbuk — your guide. ${goalLine}\n\nToday we build your Memory Palace. I have a small surprise waiting for you at the end.`;
+      return goal
+        ? `Welcome back, ${name}! I am Timbuk. ${goalLine}\n\nLet us build your first Memory Palace — it takes about 10 minutes.`
+        : `Ah, ${name}! I am Timbuk — your guide. ${goalLine}\n\nToday we build your Memory Palace. I have a small surprise waiting for you at the end.`;
     }
 
     case "onboard-skill":
@@ -854,7 +856,7 @@ export function getNextBeat(current: BeatId, state: ConversationState): BeatId |
       return "onboard-welcome";
 
     case "onboard-welcome":
-      return "onboard-skill";
+      return typeof window !== 'undefined' && localStorage.getItem('memoryamble-goal') ? "onboard-ready" : "onboard-skill";
 
     case "onboard-skill":
       return "onboard-palace";
