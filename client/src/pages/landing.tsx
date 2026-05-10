@@ -13,8 +13,24 @@ import iconBrain from "@assets/icon-brain_1778244082944.png";
 import heroCouplesky from "@assets/hero-couple-sky_1775849325223.jpg";
 import familyDrawing from "@assets/family-drawing_1775912885165.png";
 import timbukAvatar from "@assets/timbuk-hero-clean-bg_1776110930296.png";
+import { Brain, Sparkles, House } from "lucide-react";
 
 const PURPLE = "#7C3AED";
+
+function StepCard({ number, title, text, icon: Icon }: { number: string; title: string; text: string; icon: any }) {
+  return (
+    <div className="group rounded-[2rem] border border-purple-100 bg-white p-7 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-100">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#5B35D5] text-sm font-bold text-white">{number}</div>
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-[#5B35D5]">
+          <Icon size={26} />
+        </div>
+      </div>
+      <h3 className="mb-3 font-serif text-2xl font-bold text-[#24114F]">{title}</h3>
+      <p className="text-sm leading-6 text-[#635979]">{text}</p>
+    </div>
+  );
+}
 
 export default function Landing() {
   const [, navigate] = useLocation();
